@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+
+        <meta charset="utf-8">
+        <title>Schedule Control</title>
+        <meta name="description" content="">
+        <meta name="author" content="">
+      
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!--<link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>-->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/materialize.min.css') }}">
+
+        <!--<link rel="icon" type="image/png" href="../../dist/images/favicon.png">-->
+      
+      </head>
+<body>
+<!-- Primary Page Layout
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="container">
+          {% with messages = get_flashed_messages() %}
+            {% if messages %}
+              <ul class="flashes">
+                {% for message in messages %}
+                  <li>{{ message }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          {% endwith %}
+    <div class="row">
+      <div class="center-align" style="margin-top: 2%">
+        <h4>Schedule Control</h4> <!-- Irregation -->
+        <p>Actual time : {{ hour }}:{{ minute }} / Week day : {{ weekday }}</p>
+      </div>
+    </div>
+            <!-- Modal Trigger -->
+            <a class="waves-effect waves-light btn blue modal-trigger" href="#addpin">Add Pin</a>
+    <div class="row">
+    <table class="centered">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Pin</th>
+            <th>I/O</th>
+            <th>Action/State</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pin in pins %}
+          <tr>
+            <td>{{pin.name}}</td>
+            <td>{{pin.pin}}</td>
+            <td>{% if pin.io == True %}Output
+                {% else %}Input
+                {% endif %}
+            </td>
+            <td>
+                <a class="waves-effect waves-light btn" href="{{ url_for('addpin') }}">On</a>
+                <a class="waves-effect waves-light btn red" href="{{ url_for('delpin', id=pin.id) }}">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+            <!-- Modal Trigger -->
+  <a class="waves-effect waves-light btn blue modal-trigger" href="#adddaily">Add Daily Schedule</a>
+
+    <div class="row">
+        <table class="centered">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Name</th>
+                <th>Duration</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for daily in dailyschedule %}
+              <tr>
+                <td>{{daily.date}}</td>
+                <td>{{daily.pin}}</td>
+                <td>{{daily.duration}}</td>
+                <td>
+                  <a class="waves-effect waves-light btn blue" href="#">Edit</a>
+                  <a class="waves-effect waves-light btn red" href="{{ url_for('deldaily', id=daily.id) }}">Delete</a>
+                </td>   
+               </tr>
+               {% endfor %}
+            </tbody>
+          </table>
+        </div>
+ </div>
+<!-- 
+ End Document
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+  <!-- Modal Structure -->
+  <div id="adddaily" class="modal">
+    <div class="modal-content">
+      <h4>Add Daily Schedule</h4>
+      <form action="{{ url_for('adddaily') }}" method="POST">
+        <label>Set time</label>
+        {{ dailyform.Time() }} 
+        <label>Select Pin</label>
+        {{ dailyform.Pin() }} 
+        <label for="Duration">Set duration</label>
+        {{ dailyform.Duration() }}
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="waves-effect waves-light btn blue"> {{ dailyform.submit() }}</button>
+    </div>
+  </form>
+  </div>
+
+  <!-- Modal Structure -->
+  <div id="addpin" class="modal">
+    <div class="modal-content">
+      <h4>Add Pin</h4>
+      <form action="{{ url_for('addpin') }}" method="POST">
+        <label>Name</label>
+        {{ pinform.Name() }} 
+        <label>Select Pin</label>
+        {{ pinform.Pin() }} 
+        <label>Select I/O</label>
+        {{ pinform.IO() }} 
+    </div>
+    <div class="modal-footer">
+      {{ pinform.submit() }}
+    </div>
+  </form>
+  </div>
+
+
+<!-- Scripts
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<script src="{{ url_for('static', filename='js/materialize.min.js') }}"></script>
+      
+<script>
+    var timer = document.querySelectorAll('.timepicker');
+    var instances = M.Timepicker.init(timer, {});
+    var elems = document.querySelectorAll('select');
+    var instances = M.FormSelect.init(elems, {});
+    var elems = document.querySelectorAll('.modal');
+    var instances = M.Modal.init(elems, {});
+
+</script>
+
+</body>
+</html>
