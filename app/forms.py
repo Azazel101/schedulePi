@@ -14,7 +14,7 @@ def pin_query():
 class DailyScheduleForm(FlaskForm):
     Time       = TimeField("Time", validators=[DataRequired()])
     Pin      = QuerySelectField("Pin", query_factory=pin_query, allow_blank=False, get_label='name')
-    Duration  = TimeField('Duration', validators=[DataRequired()])
+    Duration  = IntegerField('Duration', validators=[DataRequired()])
     submit    = SubmitField("Add")
 
 avalible_pins = [(3,'3'),

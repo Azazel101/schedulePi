@@ -28,7 +28,7 @@
             {% endif %}
           {% endwith %}
     <div class="row">
-      <div class="mx-auto text-center" style="margin-top: 2%">
+      <div class="col align-self-center" style="margin-top: 2%">
         <h4>Schedule Control</h4> <!-- Irregation -->
         <p>Actual time : {{ hour }}:{{ minute }} / Week day : {{ weekday + 1 }} / {{ dayname }}</p>
       </div>
@@ -37,13 +37,13 @@
             <!-- Modal Trigger -->
             <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#addpin">Add Pin</button>
             {% if isalive %}
-            <button type="button" class="btn btn-outline-primary">Schedule : Run</button>
+            <a class="btn btn-outline-primary">Schedule : Run</a>
             {% else %}
             <a class="btn btn-outline-danger" href="{{ url_for('task')}}">Schedule : Stop</a>
             {% endif %}
     </div>
     <div class="row">
-    <table class="table table-sm">
+    <table class="table">
         <thead>
           <tr>
             <th>Name</th>
@@ -70,11 +70,11 @@
         </tbody>
       </table>
     </div>
-      <!-- Modal Trigger -->
-      <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#adddaily">Add Daily Schedule</button>
+            <!-- Modal Trigger -->
+  <a class="btn btn-outline-primary" href="#adddaily">Add Daily Schedule</a>
 
     <div class="row">
-        <table class="table table-sm">
+        <table class="table">
             <thead>
               <tr>
                 <th>Time</th>
@@ -99,8 +99,13 @@
           </table>
         </div>
  </div>
-<!-- ADD PIN -->
- <div class="modal fade" id="addpin" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<!-- 
+ End Document
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+  <!-- Modal Structure -->
+  <!-- Modal -->
+<div class="modal fade" id="addpin" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -111,75 +116,45 @@
       </div>
       <div class="modal-body">
         <form action="{{ url_for('addpin') }}" method="POST">
-          <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" name="name" id="name" required>
-          </div>
-          <div class="form-group">
-            <label for="pin">Pin</label>
-            <select class="form-control" name="pin" id="pin" required>
-              {% for pin in avalible_pins %}
-              <option>{{ pin }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="io">I/O</label>
-            <select class="form-control" name="io" id="io" required>
-              <option value="False">Input</option>
-              <option value="True">Output</option>
-            </select>
-          </div>
+          <label>Name</label>
+          {{ pinform.Name() }} 
+          <label>Select Pin</label>
+          {{ pinform.Pin() }} 
+          <label>Select I/O</label>
+          {{ pinform.IO() }} 
+      </div>
+        {{ pinform.submit() }}
+    </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
       </div>
-    </form>
     </div>
   </div>
 </div>
 
-<!-- ADD DAILY -->
-<div class="modal fade" id="adddaily" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div id="adddaily" class="modal fade">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Add Daily Schedule</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form action="{{ url_for('adddaily') }}" method="POST">
-          <div class="form-group">
-            <label for="name">Set time</label>
-            <input type="time" class="form-control" name="time" id="time" required>
-          </div>
-          <div class="form-group">
-            <label for="pin">Pin</label>
-            <select class="custom-select" name="name" required>
-              <option value="">Select...</option>
-              {% for pin in pins %}
-              <option value="{{pin.name}}">{{pin.name}}</option>
-              {% endfor %}
-            </select> 
-          </div>
-          <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">1</output></label>
-          <input type="range" class="custom-range" value="1" min="1" max="59" name="duration" id="duration" oninput="ageOutputId.value = duration.value">
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-primary">Save</button>
-      </div>
-    </form>
+      <h4>Add Daily Schedule</h4>
+      <form action="{{ url_for('adddaily') }}" method="POST">
+        <label>Set time</label>
+        {{ dailyform.Time() }} 
+        <label>Select Pin</label>
+        {{ dailyform.Pin() }} 
+        <label for="Duration">Set duration</label>
+        <p class="range-field">
+          <input type="range" id="Duration" min="1" max="59" />
+        </p>
     </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn"> {{ dailyform.submit() }}</button>
+    </div>
+  </form>
   </div>
-</div>
 
 <!-- Scripts
 –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-<script src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
       
 </body>

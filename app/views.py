@@ -11,7 +11,6 @@ from flask               import render_template, request, url_for, redirect, sen
 # App modules
 from app                 import app, db#, bc
 from app.models          import Pin, DailySchedule, WeeklySchedule
-from app.forms           import PinForm, DailyScheduleForm
 
 from datetime            import datetime,date
 
@@ -36,72 +35,84 @@ def schedule_task():
 
     dailyschedule = DailySchedule.query.all()
     for schedule in dailyschedule:
-        if schedule.date.hour == hour and schedule.date.minute == minute:
+        if schedule.time.hour == hour and schedule.time.minute == minute:
             print(schedule.pin)
 
+# Setup database
+@app.before_first_request
+def initialize_database():
+    db.create_all()
+    global thread
+    thread = threading.Thread(target=threaded_task, name = 'Schedule' , args=(20,))
+    thread.daemon = True
+    thread.start()
 
 
 @app.route('/')
 def index():
-    pinform = PinForm()
-    dailyform = DailyScheduleForm()
 #    get_Host_name_IP()
     now = datetime.now()#.time().strftime("%H:%M")
     hour = now.hour
     minute = now.minute
-    weekday = now.weekday() + 1
+    weekday = now.weekday()
 
     pins = Pin.query.all()
     dailyschedule = DailySchedule.query.all()
     weeklyschedule = WeeklySchedule.query.all()
 
+    days= ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
+
+    avalible_pins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26]
+
+    dayname = days[weekday]
+
+    isalive = thread.isAlive()
+
     return render_template("index.html", 
-                            pinform=pinform,
                             dailyschedule=dailyschedule,
                             weeklyschedule=weeklyschedule,
-                            dailyform = dailyform,
                             hour=hour,
                             minute=minute,
                             weekday=weekday,
-                            pins=pins)
+                            pins=pins,
+                            dayname=dayname,
+                            avalible_pins=avalible_pins,
+                            isalive=isalive)
 
 
 # ---------------------------------------- ADD
 
 @app.route('/addpin', methods=['POST'])
 def addpin():
-    form = PinForm()
-#    if form.validate_on_submit():
-    name = form.Name.data
-    pin = form.Pin.data
-    kluc = dict(form.IO.choices)
-    for key, value in kluc.items(): 
-        if form.IO.data == value: 
-            io = key
-    print(pin,name)
-    print(form.IO.data)
-    newpin = Pin(name=name, pin=pin, io=io)
-    db.session.add(newpin)
-    db.session.commit()
-#    flash(f'Sucessfull add!')
+    if request.method == 'POST':
+        name = request.form['name']
+        pin = request.form['pin']
+        io = request.form['io']
+        print(name, pin, io)
+        newpin = Pin(name=name, pin=pin, io=bool(io))
+        db.session.add(newpin)
+        db.session.commit()
+        flash(f'Sucessfull add!')
 
-    return redirect(url_for('index'))
-#    return redirect(url_for('index'))
+        return redirect(url_for('index'))
 
 
 @app.route('/adddaily', methods=['POST'])
 def adddaily():
-    form = DailyScheduleForm()
-    time = form.Time.data
-    name = form.Pin.data
-    duration = form.Duration.data
-    get_pin = Pin.query.filter_by(name=str(name)).first()
-    newdail = DailySchedule(date=time, pin=get_pin.pin, duration=duration)
-    db.session.add(newdail)
-    db.session.commit()
-#    flash(f'Sucessfull add!')
+    if request.method == 'POST':
+        time = request.form['time']
+        name = request.form['name']
+        duration = request.form['duration']
+        time_object = datetime.strptime(time, '%H:%M').time()
 
-    return redirect(url_for('index'))
+        print(time,name,duration)
+        get_pin = Pin.query.filter_by(name=str(name)).first()
+        newdail = DailySchedule(time=time_object, name=str(name), pin=int(get_pin.pin), duration=int(duration))
+        db.session.add(newdail)
+        db.session.commit()
+        flash(f'Sucessfully add!')
+
+        return redirect(url_for('index'))
 # ---------------------------------------- DELETE
 
 @app.route('/delpin/<id>')
@@ -109,7 +120,7 @@ def delpin(id):
     delpin = Pin.query.filter_by(id=id).first()
     db.session.delete(delpin)
     db.session.commit()
-#    flash(f'Sucessfull add!')
+    flash(f'Sucessfully delete!')
 
     return redirect(url_for('index'))
 
@@ -118,21 +129,21 @@ def deldaily(id):
     deldaily = DailySchedule.query.filter_by(id=id).first()
     db.session.delete(deldaily)
     db.session.commit()
-#    flash(f'Sucessfull add!')
+    flash(f'Sucessfully delete!')
 
     return redirect(url_for('index'))
 
 # ---------------------------------------- TASK
 
-@app.route("/task", defaults={'duration': 5})
+@app.route("/task", defaults={'duration': 20})
 @app.route("/task/<int:duration>")
 def task(duration):
     global thread
-    thread = threading.Thread(target=threaded_task, name = 'schedule' , args=(duration,))
+    thread = threading.Thread(target=threaded_task, name = 'Schedule' , args=(duration,))
     thread.daemon = True
     thread.start()
-    return jsonify({'thread_name': str(thread.name),
-                    'started': True})
+    return redirect(url_for('index'))
+
 
 @app.route("/gettask")
 def gettask():
