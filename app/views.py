@@ -29,7 +29,7 @@ def get_Host_name_IP():
 
 
 def schedule_task():
-    now = datetime.now()#.time().strftime("%H:%M")
+    now = datetime.now()
     hour = now.hour
     minute = now.minute
 

@@ -39,12 +39,16 @@
     </div>
     <div class="row">
             <!-- Modal Trigger -->
+            <div class="pull-left">
             <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#addpin">Add Pin</button>
+            </div>
+            <div class="pull-right">   
             {% if isalive %}
             <button type="button" class="btn btn-outline-primary">Schedule : Run</button>
             {% else %}
             <a class="btn btn-outline-danger" href="{{ url_for('task')}}">Schedule : Stop</a>
             {% endif %}
+            </div>
     </div>
     <div class="row">
     <table class="table table-sm">
