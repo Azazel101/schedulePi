@@ -113,6 +113,23 @@ def adddaily():
         flash(f'Sucessfully add!')
 
         return redirect(url_for('index'))
+
+# ---------------------------------------- EDIT
+
+@app.route('/editdaily/<int:id>', methods=['POST'])
+def editdaily(id):
+    if request.method == 'POST':
+        data = DailySchedule.query.filter_by(id=id).first()
+        time = request.form['time']
+        data.name = request.form['name']
+        data.duration = request.form['duration']
+        get_pin = Pin.query.filter_by(name=str(data.name)).first()
+        data.pin = get_pin.pin
+        data.time = datetime.strptime(time, '%H:%M').time()
+        db.session.commit()
+        flash(f'Sucessfully update!')
+        return redirect(url_for('index'))
+
 # ---------------------------------------- DELETE
 
 @app.route('/delpin/<id>')

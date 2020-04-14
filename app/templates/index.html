@@ -17,17 +17,21 @@
 <body>
 <!-- Primary Page Layout
 –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div class="container">
+<div class="container">
           {% with messages = get_flashed_messages() %}
             {% if messages %}
-            <div class="alert alert-primary" role="alert">
+            <div class="alert alert-primary alert-dismissible fade show fixed-top" id="alert" role="alert">
                 {% for message in messages %}
-                  <li>{{ message }}</li>
+                  {{ message }}
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
                 {% endfor %}
               </div>
             {% endif %}
           {% endwith %}
-    <div class="row">
+
+     <div class="row">
       <div class="mx-auto text-center" style="margin-top: 2%">
         <h4>Schedule Control</h4> <!-- Irregation -->
         <p>Actual time : {{ hour }}:{{ minute }} / Week day : {{ weekday + 1 }} / {{ dayname }}</p>
@@ -90,10 +94,48 @@
                 <td>{{daily.name}}</td>
                 <td>{{daily.duration}}</td>
                 <td>
-                  <a class="btn btn-outline-secondary" href="#">Edit</a>
+                  <a href="" class="btn btn-outline-secondary" data-toggle="modal" data-target="#editdaily{{daily.id}}">Edit</a>
                   <a class="btn btn-outline-danger" href="{{ url_for('deldaily', id=daily.id) }}">Delete</a>
                 </td>   
                </tr>
+
+<!-- EDIT DAILY -->
+<div class="modal fade" id="editdaily{{daily.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Edit Daily Schedule</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ url_for('editdaily', id=daily.id) }}" method="POST">
+          <div class="form-group">
+            <label for="name">Set time</label>
+            <input type="time" class="form-control" value="{{daily.time}}" name="time" id="time" required>
+          </div>
+          <div class="form-group">
+            <label for="pin">Pin</label>
+            <select class="custom-select" name="name" required>
+              <option value="">Select...</option>
+              {% for pin in pins %}
+              <option value="{{pin.name}}" {% if pin.name == daily.name %} selected {% endif %} >{{pin.name}}</option>
+              {% endfor %}
+            </select> 
+          </div>
+          <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">{{daily.duration}}</output></label>
+          <input type="range" class="custom-range" value="{{daily.duration}}" min="1" max="59" name="duration" id="duration" oninput="ageOutputId.value = duration.value">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
                {% endfor %}
             </tbody>
           </table>
@@ -182,5 +224,11 @@
 <script src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
       
+<script>
+  $(".alert").delay(4000).slideUp(200, function() {
+    $(this).alert('close');
+});
+</script>
+
 </body>
 </html>
