@@ -8,6 +8,8 @@ apt-get install -y python3-pip git
 
 cd /
 
+rm -r schedulePi
+
 git clone https://github.com/Azazel101/schedulePi.git
 
 cd schedulePi
