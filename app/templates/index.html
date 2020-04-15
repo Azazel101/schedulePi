@@ -8,15 +8,31 @@
         <meta name="author" content="Roman Slovak">
       
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <!--<link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>-->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
         <!--<link rel="icon" type="image/png" href="../../dist/images/favicon.png">-->
-      
-      </head>
-<body>
-<!-- Primary Page Layout
-–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+    </head>
+
+<body onload="startTime()">
+<!-- Primary Page Layout –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<div class="d-flex flex-column flex-md-row align-items-center p-2 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+  <h5 class="my-0 mr-md-auto font-weight-normal">Pi Schedule Control</h5>
+  <nav class="my-2 my-md-0 mr-md-3">
+    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#addpin">Add Pin</button>
+    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#adddaily">Add Daily Schedule</button>
+<!--    <a class="p-2 text-dark" href="#">Features</a>
+    <a class="p-2 text-dark" href="#">Enterprise</a>
+    <a class="p-2 text-dark" href="#">Support</a>
+    <a class="p-2 text-dark" href="#">Pricing</a>-->
+  {% if isalive %}
+  <button type="button" class="btn btn-sm btn-success">Schedule : Run</button>
+  {% else %}
+  <a class="btn btn-sm btn-danger" href="{{ url_for('task')}}">Schedule : Stop</a>
+  {% endif %}
+</nav>
+</div>
+
 <div class="container">
           {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -33,113 +49,116 @@
 
      <div class="row">
       <div class="mx-auto text-center" style="margin-top: 2%">
-        <h4>Schedule Control</h4> <!-- Irregation -->
-        <p>Actual time : {{ hour }}:{{ minute }} / Week day : {{ weekday + 1 }} / {{ dayname }}</p>
+        <p>Actual time : <div id="txt"></div> / Week day : {{ weekday + 1 }} / {{ dayname }}</p>
       </div>
     </div>
     <div class="row">
-            <!-- Modal Trigger -->
-            <div class="pull-left">
-            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#addpin">Add Pin</button>
-            </div>
-            <div class="pull-right">   
-            {% if isalive %}
-            <button type="button" class="btn btn-outline-primary">Schedule : Run</button>
-            {% else %}
-            <a class="btn btn-outline-danger" href="{{ url_for('task')}}">Schedule : Stop</a>
-            {% endif %}
-            </div>
-    </div>
-    <div class="row">
-    <table class="table table-sm">
+    <table class="table table-sm text-center">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Pin</th>
-            <th>I/O</th>
-            <th>Action/State</th>
+            <th class="align-middle">Name</th>
+            <th class="align-middle">Pin</th>
+            <th class="align-middle">I/O</th>
+            <th class="align-middle">Action/State</th>
           </tr>
         </thead>
         <tbody>
           {% for pin in pins %}
           <tr>
-            <td>{{pin.name}}</td>
-            <td>{{pin.pin}}</td>
-            <td>{% if pin.io == True %}Output
+            <td class="align-middle">{{pin.name}}</td>
+            <td class="align-middle">{{pin.pin}}</td>
+            <td class="align-middle">{% if pin.io == True %}Output
                 {% else %}Input
                 {% endif %}
             </td>
-            <td>
-                <a class="btn btn-outline-secondary" href="{{ url_for('addpin') }}">On</a>
-                <a class="btn btn-outline-danger" href="{{ url_for('delpin', id=pin.id) }}">Delete</a>
+            <td class="align-middle">
+                <a class="btn btn-sm btn-success" href="{{ url_for('addpin') }}">On</a>
+                <a class="btn btn-sm btn-danger" href="{{ url_for('delpin', id=pin.id) }}">Delete</a>
             </td>
           </tr>
           {% endfor %}
         </tbody>
-      </table>
+<!--   </table>
     </div>
-      <!-- Modal Trigger -->
-      <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#adddaily">Add Daily Schedule</button>
-
     <div class="row">
-        <table class="table table-sm">
+        <table class="table table-sm text-center">-->
             <thead>
               <tr>
-                <th>Time</th>
-                <th>Name</th>
-                <th>Duration</th>
-                <th>Action</th>
+                <th class="align-middle">Time</th>
+                <th class="align-middle">Name</th>
+                <th class="align-middle">Duration</th>
+                <th class="align-middle">Action</th>
               </tr>
             </thead>
             <tbody>
               {% for daily in dailyschedule %}
               <tr>
-                <td>{{daily.time}}</td>
-                <td>{{daily.name}}</td>
-                <td>{{daily.duration}}</td>
-                <td>
-                  <a href="" class="btn btn-outline-secondary" data-toggle="modal" data-target="#editdaily{{daily.id}}">Edit</a>
-                  <a class="btn btn-outline-danger" href="{{ url_for('deldaily', id=daily.id) }}">Delete</a>
+                <td class="align-middle">{{daily.time}}</td>
+                <td class="align-middle">{{daily.name}}</td>
+                <td class="align-middle">{{daily.duration}}</td>
+                <td class="align-middle">
+                  <a href="" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editdaily{{daily.id}}">Edit</a>
+                  <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deletedaily">Delete</a>
                 </td>   
                </tr>
 
-<!-- EDIT DAILY -->
-<div class="modal fade" id="editdaily{{daily.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Edit Daily Schedule</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form action="{{ url_for('editdaily', id=daily.id) }}" method="POST">
-          <div class="form-group">
-            <label for="name">Set time</label>
-            <input type="time" class="form-control" value="{{daily.time}}" name="time" id="time" required>
-          </div>
-          <div class="form-group">
-            <label for="pin">Pin</label>
-            <select class="custom-select" name="name" required>
-              <option value="">Select...</option>
-              {% for pin in pins %}
-              <option value="{{pin.name}}" {% if pin.name == daily.name %} selected {% endif %} >{{pin.name}}</option>
-              {% endfor %}
-            </select> 
-          </div>
-          <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">{{daily.duration}}</output></label>
-          <input type="range" class="custom-range" value="{{daily.duration}}" min="1" max="59" name="duration" id="duration" oninput="ageOutputId.value = duration.value">
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-primary">Save</button>
-      </div>
-    </form>
-    </div>
-  </div>
-</div>
+                    <!-- EDIT DAILY -->
+                    <div class="modal fade" id="editdaily{{daily.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title" id="exampleModalLabel">Edit Daily Schedule</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            <form action="{{ url_for('editdaily', id=daily.id) }}" method="POST">
+                              <div class="form-group">
+                                <label for="name">Set time</label>
+                                <input type="time" class="form-control" value="{{daily.time}}" name="time" id="time" required>
+                              </div>
+                              <div class="form-group">
+                                <label for="pin">Pin</label>
+                                <select class="custom-select" name="name" required>
+                                  <option value="">Select...</option>
+                                  {% for pin in pins %}
+                                  <option value="{{pin.name}}" {% if pin.name == daily.name %} selected {% endif %} >{{pin.name}}</option>
+                                  {% endfor %}
+                                </select> 
+                              </div>
+                              <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">{{daily.duration}}</output></label>
+                              <input type="range" class="custom-range" value="{{daily.duration}}" min="1" max="59" name="duration" id="duration" oninput="ageOutputId.value = duration.value">
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-warning">Update</button>
+                          </div>
+                        </form>
+                        </div>
+                      </div>
+                    </div>
 
+                    <!-- DELETE DAILY -->
+                    <div class="modal fade" id="deletedaily" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title" id="exampleModalLabel">Delete Daily Schedule</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            Are you sure want delete?
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <a class="btn btn-danger" href="{{ url_for('deldaily', id=daily.id) }}">Delete</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                {% endfor %}
             </tbody>
           </table>
@@ -149,8 +168,8 @@
  <div class="modal fade" id="addpin" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Add pin</h5>
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="exampleModalLabel">Add Pin</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -190,7 +209,7 @@
 <div class="modal fade" id="adddaily" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="exampleModalLabel">Add Daily Schedule</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
@@ -233,6 +252,24 @@
     $(this).alert('close');
 });
 </script>
+
+<script>
+  function startTime() {
+    var today = new Date();
+    var h = today.getHours();
+    var m = today.getMinutes();
+    var s = today.getSeconds();
+    m = checkTime(m);
+    s = checkTime(s);
+    document.getElementById('txt').innerHTML =
+    h + ":" + m + ":" + s;
+    var t = setTimeout(startTime, 1000);
+  }
+  function checkTime(i) {
+    if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
+    return i;
+  }
+  </script>
 
 </body>
 </html>
