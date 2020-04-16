@@ -33,7 +33,7 @@
 </nav>
 </div>
 
-<div class="container">
+<div class="container-fluid">
           {% with messages = get_flashed_messages() %}
             {% if messages %}
             <div class="alert alert-primary alert-dismissible fade show fixed-top" id="alert" role="alert">
@@ -52,8 +52,11 @@
         <p>Actual time : <div id="txt"></div> / Week day : {{ weekday + 1 }} / {{ dayname }}</p>
       </div>
     </div>
-    <div class="row">
-    <table class="table table-sm text-center">
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+          Pin Control
+        </div>
+    <table class="card-table table table-sm text-center">
         <thead>
           <tr>
             <th class="align-middle">Name</th>
@@ -68,20 +71,45 @@
             <td class="align-middle">{{pin.name}}</td>
             <td class="align-middle">{{pin.pin}}</td>
             <td class="align-middle">{% if pin.io == True %}Output
-                {% else %}Input
-                {% endif %}
+                                     {% else %}Input
+                                     {% endif %}
             </td>
             <td class="align-middle">
                 <a class="btn btn-sm btn-success" href="{{ url_for('addpin') }}">On</a>
-                <a class="btn btn-sm btn-danger" href="{{ url_for('delpin', id=pin.id) }}">Delete</a>
-            </td>
+                <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deletepin{{pin.id}}">Delete</a>
+              </td>
           </tr>
+
+              <!-- DELETE DAILY -->
+              <div class="modal fade" id="deletepin{{pin.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                      <h5 class="modal-title" id="exampleModalLabel">Delete Pin : {{pin.name}}</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                      Are you sure want delete?
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <a class="btn btn-danger" href="{{ url_for('delpin', id=pin.id) }}">Delete</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
           {% endfor %}
         </tbody>
-<!--   </table>
+    </table>
     </div>
-    <div class="row">
-        <table class="table table-sm text-center">-->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+          Daily Schedules
+        </div>
+        <table class="card-table table table-sm text-center">
             <thead>
               <tr>
                 <th class="align-middle">Time</th>
@@ -95,10 +123,10 @@
               <tr>
                 <td class="align-middle">{{daily.time}}</td>
                 <td class="align-middle">{{daily.name}}</td>
-                <td class="align-middle">{{daily.duration}}</td>
+                <td class="align-middle">{{daily.duration}} min</td>
                 <td class="align-middle">
                   <a href="" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editdaily{{daily.id}}">Edit</a>
-                  <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deletedaily">Delete</a>
+                  <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deletedaily{{daily.id}}">Delete</a>
                 </td>   
                </tr>
 
@@ -107,7 +135,7 @@
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <div class="modal-header bg-warning text-dark">
-                            <h5 class="modal-title" id="exampleModalLabel">Edit Daily Schedule</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">Edit Daily Schedule : {{daily.name}}</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                               <span aria-hidden="true">&times;</span>
                             </button>
@@ -127,7 +155,7 @@
                                   {% endfor %}
                                 </select> 
                               </div>
-                              <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">{{daily.duration}}</output></label>
+                              <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">{{daily.duration}}</output> min</label>
                               <input type="range" class="custom-range" value="{{daily.duration}}" min="1" max="59" name="duration" id="duration" oninput="ageOutputId.value = duration.value">
                           </div>
                           <div class="modal-footer">
@@ -140,11 +168,11 @@
                     </div>
 
                     <!-- DELETE DAILY -->
-                    <div class="modal fade" id="deletedaily" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal fade" id="deletedaily{{daily.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <div class="modal-header bg-danger text-white">
-                            <h5 class="modal-title" id="exampleModalLabel">Delete Daily Schedule</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">Delete Daily Schedule : {{daily.name}}</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                               <span aria-hidden="true">&times;</span>
                             </button>
@@ -191,8 +219,8 @@
           <div class="form-group">
             <label for="io">I/O</label>
             <select class="form-control" name="io" id="io" required>
-              <option value="False">Input</option>
-              <option value="True">Output</option>
+              <option value="0">Input</option>
+              <option value="1">Output</option>
             </select>
           </div>
       </div>
@@ -230,7 +258,7 @@
               {% endfor %}
             </select> 
           </div>
-          <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">1</output></label>
+          <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">1</output> min</label>
           <input type="range" class="custom-range" value="1" min="1" max="59" name="duration" id="duration" oninput="ageOutputId.value = duration.value">
       </div>
       <div class="modal-footer">

@@ -89,7 +89,8 @@ def addpin():
         pin = request.form['pin']
         io = request.form['io']
         print(name, pin, io)
-        newpin = Pin(name=name, pin=pin, io=bool(io))
+        print(bool(int(io)))
+        newpin = Pin(name=name, pin=pin, io=bool(int(io)))
         db.session.add(newpin)
         db.session.commit()
         flash(f'Sucessfull add!')
