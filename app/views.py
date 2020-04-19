@@ -30,6 +30,7 @@ def get_Host_name_IP():
         print("Unable to get Hostname and IP")
 
 def setup_gpio():
+    print('Setting GPIO....')
     GPIO.setmode(GPIO.BOARD)
     pins = Pin.query.all()
     for pin in pins:
@@ -37,6 +38,14 @@ def setup_gpio():
             GPIO.setup(pin.pin, GPIO.OUT)
         else: # Input
             GPIO.setup(pin.pin, GPIO.IN)
+
+def row2dict(row):
+    global d
+    d = {}
+    for column in row.__table__.columns:
+        d[column.name] = str(getattr(row, column.name))
+
+    return d
 
 def schedule_task():
     now = datetime.now()
@@ -71,6 +80,11 @@ def index():
     dailyschedule = DailySchedule.query.all()
     weeklyschedule = WeeklySchedule.query.all()
 
+    pin_status = {}
+    for pin in pins:
+        pin_status[pin.pin] = GPIO.input(pin.pin)
+
+
     days= ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
 
     avalible_pins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26]
@@ -86,6 +100,7 @@ def index():
                             minute=minute,
                             weekday=weekday,
                             pins=pins,
+                            pin_status=pin_status,
                             dayname=dayname,
                             avalible_pins=avalible_pins,
                             isalive=isalive)
@@ -105,7 +120,7 @@ def addpin():
         db.session.add(newpin)
         db.session.commit()
         flash(f'Sucessfull add!')
-
+        setup_gpio()
         return redirect(url_for('index'))
 
 
@@ -166,6 +181,19 @@ def deldaily(id):
     flash(f'Sucessfully delete!')
 
     return redirect(url_for('index'))
+
+# ---------------------------------------- GPIO - ON/OFF
+@app.route("/on/<int:id>")
+def gpio_on(id):
+    GPIO.output(id, True)
+    return redirect(url_for('index'))
+
+
+@app.route("/off/<int:id>")
+def gpio_off(id):
+    GPIO.output(id, False)
+    return redirect(url_for('index'))
+
 
 # ---------------------------------------- TASK
 

@@ -19,8 +19,6 @@
 <div class="d-flex flex-column flex-md-row align-items-center p-2 px-md-4 mb-3 bg-white border-bottom shadow-sm">
   <h5 class="my-0 mr-md-auto font-weight-normal">Pi Schedule Control</h5>
   <nav class="my-2 my-md-0 mr-md-3">
-    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#addpin">Add Pin</button>
-    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#adddaily">Add Daily Schedule</button>
 <!--    <a class="p-2 text-dark" href="#">Features</a>
     <a class="p-2 text-dark" href="#">Enterprise</a>
     <a class="p-2 text-dark" href="#">Support</a>
@@ -55,6 +53,8 @@
       <div class="card mb-4 shadow-sm">
         <div class="card-header">
           Pin Control
+          <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#addpin">Add Pin</button>
+
         </div>
     <table class="card-table table table-sm text-center">
         <thead>
@@ -75,7 +75,23 @@
                                      {% endif %}
             </td>
             <td class="align-middle">
-                <a class="btn btn-sm btn-success" href="{{ url_for('addpin') }}">On</a>
+              {% if pin.io == True %}
+
+                {% if pin_status[pin.pin] == True %}
+                    <a class="btn btn-sm btn-primary" href="{{ url_for('gpio_off', id=pin.pin) }}">Off</a> <!-- Output -->
+                {% else %}
+                    <a class="btn btn-sm btn-success" href="{{ url_for('gpio_on', id=pin.pin) }}">On</a> <!-- Output -->
+                {% endif %}
+              
+              {% else %}
+
+                {% if pin_status[pin.pin] == True %}
+                    <a class="btn btn-sm btn-outline-success" href="#">On</a> <!-- Input -->
+                {% else %}
+                <a class="btn btn-sm btn-outline-primary" href="#">Off</a> <!-- Input -->
+                {% endif %}
+              
+              {% endif %}
                 <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deletepin{{pin.id}}">Delete</a>
               </td>
           </tr>
@@ -108,6 +124,7 @@
       <div class="card mb-4 shadow-sm">
         <div class="card-header">
           Daily Schedules
+          <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#adddaily">Add Daily Schedule</button>
         </div>
         <table class="card-table table table-sm text-center">
             <thead>
@@ -192,6 +209,7 @@
           </table>
         </div>
  </div>
+
 <!-- ADD PIN -->
  <div class="modal fade" id="addpin" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -270,8 +288,7 @@
   </div>
 </div>
 
-<!-- Scripts
-–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<!-- Scripts –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 <script src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
       
