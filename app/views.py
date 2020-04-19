@@ -17,6 +17,8 @@ from datetime            import datetime,date
 import threading
 from app.tasks           import threaded_task
 
+import OPi.GPIO          as GPIO
+
 
 def get_Host_name_IP(): 
     try: 
@@ -27,6 +29,14 @@ def get_Host_name_IP():
     except: 
         print("Unable to get Hostname and IP")
 
+def setup_gpio():
+    GPIO.setmode(GPIO.BOARD)
+    pins = Pin.query.all()
+    for pin in pins:
+        if pin.io: # Output
+            GPIO.setup(pin.pin, GPIO.OUT)
+        else: # Input
+            GPIO.setup(pin.pin, GPIO.IN)
 
 def schedule_task():
     now = datetime.now()
@@ -42,6 +52,7 @@ def schedule_task():
 @app.before_first_request
 def initialize_database():
     db.create_all()
+    setup_gpio()
     global thread
     thread = threading.Thread(target=threaded_task, name = 'Schedule' , args=(20,))
     thread.daemon = True
