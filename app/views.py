@@ -12,7 +12,7 @@ from flask               import render_template, request, url_for, redirect, sen
 from app                 import app, db#, bc
 from app.models          import Pin, DailySchedule, WeeklySchedule
 
-from datetime            import datetime,date
+from datetime            import datetime,date,timedelta,time
 
 import threading
 from app.tasks           import threaded_task
@@ -32,6 +32,7 @@ def get_Host_name_IP():
 def setup_gpio():
     print('Setting GPIO....')
     GPIO.setmode(GPIO.BOARD)
+    GPIO.setwarnings(False)
     pins = Pin.query.all()
     for pin in pins:
         if pin.io: # Output
@@ -39,31 +40,40 @@ def setup_gpio():
         else: # Input
             GPIO.setup(pin.pin, GPIO.IN)
 
-def row2dict(row):
-    global d
-    d = {}
-    for column in row.__table__.columns:
-        d[column.name] = str(getattr(row, column.name))
-
-    return d
-
 def schedule_task():
-    now = datetime.now()
-    hour = now.hour
-    minute = now.minute
+    past_minut = 0
+    off_pin = {}
+    # While loop
+    print('Start schedule...')
+    while True:
+        now = datetime.now()
+        if now.minute != past_minut:
+            dailyschedule = DailySchedule.query.all()
+            db.session.commit()
+            print('Schedule trigger :', now.hour, now.minute)
+            for schedule in dailyschedule:
+                if schedule.time.hour == now.hour and schedule.time.minute == now.minute:
+                    print('Schedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
+                    GPIO.output(schedule.pin, True)
+                    off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
 
-    dailyschedule = DailySchedule.query.all()
-    for schedule in dailyschedule:
-        if schedule.time.hour == hour and schedule.time.minute == minute:
-            print(schedule.pin)
+            if off_pin:
+                for key,value in off_pin.items():
+                    if value.hour == now.hour and value.minute == now.minute:
+                        print('Schedule RESET :(',value.hour, ':', value.minute, ') - pin : ' , key)
+                        GPIO.output(key, False)
+
+        past_minut = now.minute
+
 
 # Setup database
-@app.before_first_request
-def initialize_database():
+#@app.before_first_request
+def initialize():
     db.create_all()
+    GPIO.cleanup()
     setup_gpio()
     global thread
-    thread = threading.Thread(target=threaded_task, name = 'Schedule' , args=(20,))
+    thread = threading.Thread(target=schedule_task, name = 'Schedule')
     thread.daemon = True
     thread.start()
 
@@ -131,8 +141,6 @@ def adddaily():
         name = request.form['name']
         duration = request.form['duration']
         time_object = datetime.strptime(time, '%H:%M').time()
-
-        print(time,name,duration)
         get_pin = Pin.query.filter_by(name=str(name)).first()
         newdail = DailySchedule(time=time_object, name=str(name), pin=int(get_pin.pin), duration=int(duration))
         db.session.add(newdail)
@@ -197,21 +205,10 @@ def gpio_off(id):
 
 # ---------------------------------------- TASK
 
-@app.route("/task", defaults={'duration': 20})
-@app.route("/task/<int:duration>")
-def task(duration):
+@app.route("/task")
+def task():
     global thread
-    thread = threading.Thread(target=threaded_task, name = 'Schedule' , args=(duration,))
+    thread = threading.Thread(target=schedule_task, name = 'Schedule')
     thread.daemon = True
     thread.start()
     return redirect(url_for('index'))
-
-
-@app.route("/gettask")
-def gettask():
-    return jsonify({'thread_is_alive': str(thread.isAlive())})
-
-@app.route("/stoptask")
-def stoptask():
-    schedule_task()
-    return jsonify({'thread_is_alive': True})
