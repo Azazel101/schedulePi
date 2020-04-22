@@ -4,10 +4,6 @@ import os
 from flask            import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-import threading
-from app.tasks import threaded_task
-#from flask_bcrypt     import Bcrypt
-
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
 

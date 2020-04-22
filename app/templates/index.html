@@ -272,7 +272,9 @@
             <select class="custom-select" name="name" required>
               <option value="">Select...</option>
               {% for pin in pins %}
+                {% if pin.io == True %}
               <option value="{{pin.name}}">{{pin.name}}</option>
+                {% endif %}
               {% endfor %}
             </select> 
           </div>

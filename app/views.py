@@ -18,6 +18,7 @@ import threading
 from app.tasks           import threaded_task
 
 import OPi.GPIO          as GPIO
+import smbus
 
 
 def get_Host_name_IP(): 
@@ -36,9 +37,23 @@ def setup_gpio():
     pins = Pin.query.all()
     for pin in pins:
         if pin.io: # Output
-            GPIO.setup(pin.pin, GPIO.OUT)
+            print('Set OUTPUT : ', pin.pin)
+            GPIO.setup(pin.pin, GPIO.OUT, initial=GPIO.HIGH)
         else: # Input
+            print('Set INPUT : ', pin.pin)
             GPIO.setup(pin.pin, GPIO.IN)
+
+def scan_i2c():
+    bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
+
+    for device in range(128):
+
+        try:
+            bus.read_byte(device)
+            print(hex(device))
+        except: # exception if read_byte fails
+            pass
+
 
 def schedule_task():
     past_minut = 0
@@ -54,14 +69,14 @@ def schedule_task():
             for schedule in dailyschedule:
                 if schedule.time.hour == now.hour and schedule.time.minute == now.minute:
                     print('Schedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
-                    GPIO.output(schedule.pin, True)
+                    GPIO.output(schedule.pin, False)
                     off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
 
             if off_pin:
                 for key,value in off_pin.items():
                     if value.hour == now.hour and value.minute == now.minute:
                         print('Schedule RESET :(',value.hour, ':', value.minute, ') - pin : ' , key)
-                        GPIO.output(key, False)
+                        GPIO.output(key, True)
 
         past_minut = now.minute
 
@@ -93,7 +108,6 @@ def index():
     pin_status = {}
     for pin in pins:
         pin_status[pin.pin] = GPIO.input(pin.pin)
-
 
     days= ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
 
@@ -211,4 +225,9 @@ def task():
     thread = threading.Thread(target=schedule_task, name = 'Schedule')
     thread.daemon = True
     thread.start()
+    return redirect(url_for('index'))
+
+@app.route("/func")
+def func():
+    scan_i2c()
     return redirect(url_for('index'))
