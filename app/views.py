@@ -106,12 +106,17 @@ def index():
     weeklyschedule = WeeklySchedule.query.all()
 
     pin_status = {}
+    used_pin = []
     for pin in pins:
         pin_status[pin.pin] = GPIO.input(pin.pin)
+        used_pin.append(pin.pin)
 
+    print(used_pin)
     days= ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
-
     avalible_pins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26]
+
+    for pin in used_pin:
+        avalible_pins.remove(pin)
 
     dayname = days[weekday]
 
