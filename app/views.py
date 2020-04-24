@@ -15,7 +15,6 @@ from app.models          import Pin, DailySchedule, WeeklySchedule
 from datetime            import datetime,date,timedelta,time
 
 import threading
-from app.tasks           import threaded_task
 
 import OPi.GPIO          as GPIO
 import smbus
@@ -65,7 +64,7 @@ def schedule_task():
         if now.minute != past_minut:
             dailyschedule = DailySchedule.query.all()
             db.session.commit()
-            print('Schedule trigger :', now.hour, now.minute)
+            #print('Schedule trigger :', now.hour, now.minute)
             for schedule in dailyschedule:
                 if schedule.time.hour == now.hour and schedule.time.minute == now.minute:
                     print('Schedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
@@ -81,13 +80,14 @@ def schedule_task():
         past_minut = now.minute
 
 
-# Setup database
-#@app.before_first_request
+# Setup
+@app.before_first_request
 def initialize():
     db.create_all()
     GPIO.cleanup()
     setup_gpio()
-    global thread
+    global thread,ip_req
+    ip_req = []
     thread = threading.Thread(target=schedule_task, name = 'Schedule')
     thread.daemon = True
     thread.start()
@@ -107,15 +107,18 @@ def index():
 
     pin_status = {}
     used_pin = []
-    for pin in pins:
+    for pin in pins: # read status of pin
         pin_status[pin.pin] = GPIO.input(pin.pin)
         used_pin.append(pin.pin)
 
-    print(used_pin)
+    # tracking all ip to access
+    if request.remote_addr not in ip_req:
+        ip_req.append(request.remote_addr)
+
     days= ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
     avalible_pins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26]
 
-    for pin in used_pin:
+    for pin in used_pin: # delete used pin
         avalible_pins.remove(pin)
 
     dayname = days[weekday]
@@ -132,6 +135,7 @@ def index():
                             pin_status=pin_status,
                             dayname=dayname,
                             avalible_pins=avalible_pins,
+                            ip_req=ip_req,
                             isalive=isalive)
 
 
@@ -142,14 +146,19 @@ def addpin():
     if request.method == 'POST':
         name = request.form['name']
         pin = request.form['pin']
-        io = request.form['io']
-        print(name, pin, io)
-        print(bool(int(io)))
-        newpin = Pin(name=name, pin=pin, io=bool(int(io)))
+        io = bool(int(request.form['io']))
+        newpin = Pin(name=name, pin=pin, io=io)
         db.session.add(newpin)
         db.session.commit()
-        flash(f'Sucessfull add!')
-        setup_gpio()
+
+        if io: # Output
+            print('Set OUTPUT : ', pin)
+            GPIO.setup(int(pin), GPIO.OUT, initial=GPIO.HIGH)
+        else: # Input
+            print('Set INPUT : ', pin)
+            GPIO.setup(int(pin), GPIO.IN)
+        
+        flash(f'Sucessfull add!', 'success')
         return redirect(url_for('index'))
 
 
@@ -164,7 +173,7 @@ def adddaily():
         newdail = DailySchedule(time=time_object, name=str(name), pin=int(get_pin.pin), duration=int(duration))
         db.session.add(newdail)
         db.session.commit()
-        flash(f'Sucessfully add!')
+        flash(f'Sucessfully add!', 'success')
 
         return redirect(url_for('index'))
 
@@ -186,7 +195,7 @@ def editdaily(id):
         get_pin = Pin.query.filter_by(name=str(data.name)).first()
         data.pin = get_pin.pin
         db.session.commit()
-        flash(f'Sucessfully update!')
+        flash(f'Sucessfully update!', 'warning')
         return redirect(url_for('index'))
 
 # ---------------------------------------- DELETE
@@ -194,9 +203,13 @@ def editdaily(id):
 @app.route('/delpin/<id>')
 def delpin(id):
     delpin = Pin.query.filter_by(id=id).first()
+    deldaily = DailySchedule.query.filter_by(name=str(delpin.name))
+    if deldaily : 
+        for delete in deldaily:
+            db.session.delete(delete)
     db.session.delete(delpin)
     db.session.commit()
-    flash(f'Sucessfully delete!')
+    flash(f'Sucessfully delete!', 'danger')
 
     return redirect(url_for('index'))
 
@@ -205,7 +218,7 @@ def deldaily(id):
     deldaily = DailySchedule.query.filter_by(id=id).first()
     db.session.delete(deldaily)
     db.session.commit()
-    flash(f'Sucessfully delete!')
+    flash(f'Sucessfully delete!', 'danger')
 
     return redirect(url_for('index'))
 
@@ -221,7 +234,19 @@ def gpio_off(id):
     GPIO.output(id, False)
     return redirect(url_for('index'))
 
+@app.route("/all_off")
+def all_off():
+    pins = Pin.query.all()
+    for pin in pins:
+        if pin.io: GPIO.output(pin.pin, True)
+    return redirect(url_for('index'))
 
+@app.route("/all_on")
+def all_on():
+    pins = Pin.query.all()
+    for pin in pins:
+        if pin.io: GPIO.output(pin.pin, False)
+    return redirect(url_for('index'))
 # ---------------------------------------- TASK
 
 @app.route("/task")
@@ -236,3 +261,7 @@ def task():
 def func():
     scan_i2c()
     return redirect(url_for('index'))
+
+@app.route("/get_my_ip", methods=["GET"])
+def get_my_ip():
+    return jsonify({'ip': request.remote_addr}), 200

@@ -24,22 +24,22 @@
     <a class="p-2 text-dark" href="#">Support</a>
     <a class="p-2 text-dark" href="#">Pricing</a>-->
   {% if isalive %}
-  <button type="button" class="btn btn-sm btn-success">Schedule : Run</button>
+  <button type="button" class="btn btn-success">Schedule : Run</button>
   {% else %}
-  <a class="btn btn-sm btn-danger" href="{{ url_for('task')}}">Schedule : Stop</a>
+  <a class="btn btn-danger" href="{{ url_for('task')}}">Schedule : Stop</a>
   {% endif %}
 </nav>
 </div>
 
 <div class="container-fluid">
-          {% with messages = get_flashed_messages() %}
+          {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <div class="alert alert-primary alert-dismissible fade show fixed-top" id="alert" role="alert">
-                {% for message in messages %}
-                  {{ message }}
-                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
+              {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show fixed-top" id="alert" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
                 {% endfor %}
               </div>
             {% endif %}
@@ -50,9 +50,10 @@
         <p>Actual time : <div id="txt"></div> / Week day : {{ weekday + 1 }} / {{ dayname }}</p>
       </div>
     </div>
-      <div class="card mb-4 shadow-sm">
+      <div class="card mb-4 shadow-sm align-item-center">
         <div class="card-header">
           Pin Control
+          <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#addpin">Add Pin</button>
           <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#addpin">Add Pin</button>
 
         </div>
@@ -286,6 +287,28 @@
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </form>
+    </div>
+  </div>
+</div>
+
+<!-- DISPLAY IP -->
+<div class="modal fade" id="IP" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="exampleModalLabel">Add Daily Schedule</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% for ip in ip_req %}
+        {{ip}}
+        {% endfor %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
     </div>
   </div>
 </div>
