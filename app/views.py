@@ -59,6 +59,8 @@ def scan_i2c():
 
 
 def schedule_task():
+    global off_pin
+
     past_minut = 0
     off_pin = {}
     # While loop
@@ -71,13 +73,14 @@ def schedule_task():
             dailyschedule = DailySchedule.query.all()
             weeklyschedule = WeeklySchedule.query.all()
             db.session.commit()
-            #print('Schedule trigger :', now.hour, now.minute)
+
             #DailySchedule
             for schedule in dailyschedule:
                 if schedule.time.hour == now.hour and schedule.time.minute == now.minute:
                     print('DailySchedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
                     GPIO.output(schedule.pin, False)
                     off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
+
             #WeekSchedule
             for schedule in weeklyschedule:
                 actualday = [schedule.d1,schedule.d2,schedule.d3,schedule.d4,schedule.d5,schedule.d6,schedule.d7] 
@@ -281,7 +284,17 @@ def addweekly():
         day7 = request.form.get('day7')
         time_object = datetime.strptime(time, '%H:%M').time()
         get_pin = Pin.query.filter_by(name=str(name)).first()
-        newweekly = WeeklySchedule(time=time_object, name=str(name), pin=int(get_pin.pin), duration=int(duration),d1=bool(day1) ,d2=bool(day2),d3=bool(day3),d4=bool(day4),d5=bool(day5),d6=bool(day6),d7=bool(day7))
+        newweekly = WeeklySchedule(time=time_object, 
+                                    name=str(name), 
+                                    pin=int(get_pin.pin),
+                                    duration=int(duration),
+                                    d1=bool(day1),
+                                    d2=bool(day2),
+                                    d3=bool(day3),
+                                    d4=bool(day4),
+                                    d5=bool(day5),
+                                    d6=bool(day6),
+                                    d7=bool(day7))
         db.session.add(newweekly)
         db.session.commit()
         flash(f'Sucessfully add!', 'success')
@@ -393,6 +406,26 @@ def all_on():
     for pin in pins:
         if pin.io: GPIO.output(pin.pin, False)
     return redirect(url_for('index'))
+# ---------------------------------------- Activate Schedule
+
+@app.route('/activeweekly/<int:id>')
+def activeweekly(id):
+    active = WeeklySchedule.query.filter_by(id=id).first()
+    db.session.commit()
+    GPIO.output(active.pin, True)
+    off_pin[schedule.pin] = now + timedelta(minutes=active.duration)
+    flash(f'Sucessfully active!', 'primary')
+    return redirect(url_for('index'))
+
+@app.route('/activedaily/<int:id>')
+def activedaily(id):
+    active = DailySchedule.query.filter_by(id=id).first()
+    db.session.commit()
+    GPIO.output(active.pin, True)
+    off_pin[schedule.pin] = now + timedelta(minutes=active.duration)
+    flash(f'Sucessfully active!', 'primary')
+    return redirect(url_for('index'))
+
 # ---------------------------------------- TASK
 
 @app.route("/task")
