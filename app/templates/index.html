@@ -10,7 +10,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-        <!--<link rel="icon" type="image/png" href="../../dist/images/favicon.png">-->
+         <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
 
     </head>
 
@@ -46,14 +46,13 @@
           {% endwith %}
 
      <div class="row">
-      <div class="mx-auto text-center" style="margin-top: 2%">
-        <p>Actual time : <div id="txt"></div> / Week day : {{ weekday + 1 }} / {{ dayname }}</p>
+      <div class="mx-auto text-center"> <!-- style="margin-top: 2%"-->
+        <p>Week day : {{ weekday + 1 }} / {{ dayname }}</p>
       </div>
     </div>
       <div class="card mb-4 shadow-sm align-item-center">
         <div class="card-header">
           Pin Control
-          <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#addpin">Add Pin</button>
           <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#addpin">Add Pin</button>
 
         </div>
@@ -97,7 +96,7 @@
               </td>
           </tr>
 
-              <!-- DELETE DAILY -->
+              <!-- DELETE PIN -->
               <div class="modal fade" id="deletepin{{pin.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
@@ -122,7 +121,8 @@
         </tbody>
     </table>
     </div>
-      <div class="card mb-4 shadow-sm">
+<!-- Daily Schedules -->
+    <div class="card mb-4 shadow-sm">
         <div class="card-header">
           Daily Schedules
           <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#adddaily">Add Daily Schedule</button>
@@ -143,6 +143,7 @@
                 <td class="align-middle">{{daily.name}}</td>
                 <td class="align-middle">{{daily.duration}} min</td>
                 <td class="align-middle">
+                  <a class="btn btn-sm btn-primary" href="">Active</a>
                   <a href="" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editdaily{{daily.id}}">Edit</a>
                   <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deletedaily{{daily.id}}">Delete</a>
                 </td>   
@@ -209,6 +210,124 @@
             </tbody>
           </table>
         </div>
+<!-- Weekly Schedules -->
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header">
+        Weekly Schedules
+        <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#addweekly">Add Weekly Schedule</button>
+      </div>
+      <table class="card-table table table-sm text-center">
+          <thead>
+            <tr>
+              <th class="align-middle">Time</th>
+              <th class="align-middle">Name</th>
+              <th class="align-middle">Duration</th>
+              <th class="align-middle">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for weekly in weeklyschedule %}
+            <tr>
+              <td class="align-middle">{{weekly.time}}</td>
+              <td class="align-middle">{{weekly.name}}</td>
+              <td class="align-middle">{{weekly.duration}} min</td>
+              <td class="align-middle">
+                <a class="btn btn-sm btn-primary" href="">Active</a>
+                <a href="" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editweekly{{weekly.id}}">Edit</a>
+                <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteweekly{{weekly.id}}">Delete</a>
+              </td>   
+             </tr>
+
+                  <!-- EDIT WEEKLY -->
+                  <div class="modal fade" id="editweekly{{weekly.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                          <h5 class="modal-title" id="exampleModalLabel">Edit Weekly Schedule : {{weekly.name}}</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-body">
+                          <form action="{{ url_for('editweekly', id=weekly.id) }}" method="POST">
+                            <div class="form-group">
+                              <label for="name">Set time</label>
+                              <input type="time" class="form-control" value="{{weekly.time}}" name="time" id="time" required>
+                            </div>
+                            <div class="form-group">
+                              <label for="pin">Pin</label>
+                              <select class="custom-select" name="name" required>
+                                <option value="">Select...</option>
+                                {% for pin in pins %}
+                                <option value="{{pin.name}}" {% if pin.name == weekly.name %} selected {% endif %} >{{pin.name}}</option>
+                                {% endfor %}
+                              </select> 
+                            </div>
+                            <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">{{weekly.duration}}</output> min</label>
+                            <input type="range" class="custom-range" value="{{weekly.duration}}" min="1" max="59" name="duration" id="duration" oninput="ageOutputId.value = duration.value">
+                            <label>Day : </label>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="day1" type="checkbox" id="day1" value="1" {% if weekly.d1 %} checked {% endif %}>
+                              <label class="form-check-label" for="day1">1</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="day2" type="checkbox" id="day2" value="1" {% if weekly.d2 %} checked {% endif %}>
+                              <label class="form-check-label" for="day2">2</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="day3" type="checkbox" id="day3" value="1" {% if weekly.d3 %} checked {% endif %}>
+                              <label class="form-check-label" for="day3">3</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="day4" type="checkbox" id="day4" value="1" {% if weekly.d4 %} checked {% endif %}>
+                              <label class="form-check-label" for="day4">4</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="day5" type="checkbox" id="day5" value="1" {% if weekly.d5 %} checked {% endif %}>
+                              <label class="form-check-label" for="day5">5</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="day6" type="checkbox" id="day6" value="1" {% if weekly.d6 %} checked {% endif %}>
+                              <label class="form-check-label" for="day6">6</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="day7" type="checkbox" id="day7" value="7" {% if weekly.d7 %} checked {% endif %}>
+                              <label class="form-check-label" for="day7">7</label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                          <button type="submit" class="btn btn-warning">Update</button>
+                        </div>
+                      </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- DELETE WEEKLY -->
+                  <div class="modal fade" id="deleteweekly{{weekly.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                          <h5 class="modal-title" id="exampleModalLabel">Delete Weekly Schedule : {{weekly.name}}</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-body">
+                          Are you sure want delete?
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                          <a class="btn btn-danger" href="{{ url_for('delweekly', id=weekly.id) }}">Delete</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+             {% endfor %}
+          </tbody>
+        </table>
+      </div>
  </div>
 
 <!-- ADD PIN -->
@@ -291,6 +410,74 @@
   </div>
 </div>
 
+<!-- ADD WEEKLY -->
+<div class="modal fade" id="addweekly" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="exampleModalLabel">Add Weekly Schedule</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ url_for('addweekly') }}" method="POST">
+          <div class="form-group">
+            <label for="name">Set time</label>
+            <input type="time" class="form-control" name="time" id="time" required>
+          </div>
+          <div class="form-group">
+            <label for="pin">Pin</label>
+            <select class="custom-select" name="name" required>
+              <option value="">Select...</option>
+              {% for pin in pins %}
+                {% if pin.io == True %}
+              <option value="{{pin.name}}">{{pin.name}}</option>
+                {% endif %}
+              {% endfor %}
+            </select> 
+          </div>
+          <label for="duration">Duration : <output name="ageOutputName" id="ageOutputId">1</output> min</label>
+          <input type="range" class="custom-range" value="1" min="1" max="59" name="duration" id="duration" oninput="ageOutputId.value = duration.value">
+          <label>Day : </label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" name="day1" type="checkbox" id="day1" value="1">
+            <label class="form-check-label" for="day1">1</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" name="day2" type="checkbox" id="day2" value="1">
+            <label class="form-check-label" for="day2">2</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" name="day3" type="checkbox" id="day3" value="1">
+            <label class="form-check-label" for="day3">3</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" name="day4" type="checkbox" id="day4" value="1">
+            <label class="form-check-label" for="day4">4</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" name="day5" type="checkbox" id="day5" value="1">
+            <label class="form-check-label" for="day5">5</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" name="day6" type="checkbox" id="day6" value="1">
+            <label class="form-check-label" for="day6">6</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" name="day7" type="checkbox" id="day7" value="7">
+            <label class="form-check-label" for="day7">7</label>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
 <!-- DISPLAY IP -->
 <div class="modal fade" id="IP" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -322,7 +509,7 @@
     $(this).alert('close');
 });
 </script>
-
+<!--
 <script>
   function startTime() {
     var today = new Date();
@@ -340,6 +527,6 @@
     return i;
   }
   </script>
-
+-->
 </body>
 </html>

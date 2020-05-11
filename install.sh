@@ -4,7 +4,7 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-apt-get install -y python3-pip git
+apt-get install -y python3-pip python-dev i2c-tools git
 
 cd /
 
