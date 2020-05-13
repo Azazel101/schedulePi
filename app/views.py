@@ -410,19 +410,21 @@ def all_on():
 
 @app.route('/activeweekly/<int:id>')
 def activeweekly(id):
+    now = datetime.now()
     active = WeeklySchedule.query.filter_by(id=id).first()
     db.session.commit()
-    GPIO.output(active.pin, True)
-    off_pin[schedule.pin] = now + timedelta(minutes=active.duration)
+    GPIO.output(active.pin, False)
+    off_pin[active.pin] = now + timedelta(minutes=active.duration)
     flash(f'Sucessfully active!', 'primary')
     return redirect(url_for('index'))
 
 @app.route('/activedaily/<int:id>')
 def activedaily(id):
+    now = datetime.now()
     active = DailySchedule.query.filter_by(id=id).first()
     db.session.commit()
-    GPIO.output(active.pin, True)
-    off_pin[schedule.pin] = now + timedelta(minutes=active.duration)
+    GPIO.output(active.pin, False)
+    off_pin[active.pin] = now + timedelta(minutes=active.duration)
     flash(f'Sucessfully active!', 'primary')
     return redirect(url_for('index'))
 
