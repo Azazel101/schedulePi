@@ -92,9 +92,36 @@
                 {% endif %}
               
               {% endif %}
+              <a href="" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editpin{{pin.id}}">Edit</a>
                 <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deletepin{{pin.id}}">Delete</a>
               </td>
           </tr>
+
+          <!-- EDIT DAILY -->
+          <div class="modal fade" id="editpin{{pin.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                  <h5 class="modal-title" id="exampleModalLabel">Edit Pin : {{pin.pin}}</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <form action="{{ url_for('editpin', id=pin.id) }}" method="POST">
+                    <div class="form-group">
+                      <label for="name">Name</label>
+                      <input type="text" class="form-control" value="{{pin.name}}" name="name" id="name" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-warning">Update</button>
+                </div>
+              </form>
+              </div>
+            </div>
+          </div>
 
               <!-- DELETE PIN -->
               <div class="modal fade" id="deletepin{{pin.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">

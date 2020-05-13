@@ -302,6 +302,14 @@ def addweekly():
         return redirect(url_for('index'))
 
 # ---------------------------------------- EDIT
+@app.route('/editpin/<int:id>', methods=['POST'])
+def editpin(id):
+    if request.method == 'POST':
+        data = Pin.query.filter_by(id=id).first()
+        data.name = request.form['name']
+        db.session.commit()
+        flash(f'Sucessfully update!', 'warning')
+        return redirect(url_for('index'))
 
 @app.route('/editdaily/<int:id>', methods=['POST'])
 def editdaily(id):
@@ -354,8 +362,12 @@ def editweekly(id):
 def delpin(id):
     delpin = Pin.query.filter_by(id=id).first()
     deldaily = DailySchedule.query.filter_by(name=str(delpin.name))
+    delweekly = DailySchedule.query.filter_by(name=str(delpin.name))
     if deldaily : 
         for delete in deldaily:
+            db.session.delete(delete)
+    if delweekly : 
+        for delete in delweekly:
             db.session.delete(delete)
     db.session.delete(delpin)
     db.session.commit()
