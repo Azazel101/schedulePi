@@ -5,6 +5,7 @@ import os, logging
 import socket    # Get Host name and IP
 import time
 import logging
+import requests
 
 # Flask modules
 from flask               import render_template, request, url_for, redirect, send_from_directory, send_file, flash, jsonify
@@ -20,7 +21,28 @@ import threading
 import OPi.GPIO          as GPIO
 import smbus
 
+from configparser import ConfigParser
+
+config = ConfigParser()
+config.read('config.ini')
+
 bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
+
+#def set_config():
+#    config.read('config.ini')
+#    config.add_section('main')
+#    config.set('main', 'darksky', '8cf0d9b4c83a4030bfaf2c73491334cf')
+#    config.set('main', 'openweathermap', '3dca0989ce139015bd7f881af1893c5f')
+#    config.set('main', 'opencagedata', 'd82859da6a3d4320b056ab23ffe5d627')
+
+#    with open('config.ini', 'w') as f:
+#        config.write(f)
+
+def load_config(api_key):
+    print('Load API-Key...')
+    api_key['darksky'] = config.get('main', 'darksky')
+    api_key['openweathermap'] = config.get('main', 'openweathermap')
+    api_key['opencagedata'] = config.get('main', 'opencagedata')
 
 
 def get_Host_name_IP(): 
@@ -56,59 +78,6 @@ def scan_i2c():
             print(hex(device))
         except: # exception if read_byte fails
             pass
-
-
-def schedule_task():
-    global off_pin
-
-    past_minut = 0
-    off_pin = {}
-    # While loop
-    print('Start schedule...')
-    while True:
-        now = datetime.now()
-        weekday = now.weekday()
-
-        if now.minute != past_minut:
-            dailyschedule = DailySchedule.query.all()
-            weeklyschedule = WeeklySchedule.query.all()
-            db.session.commit()
-
-            #DailySchedule
-            for schedule in dailyschedule:
-                if schedule.time.hour == now.hour and schedule.time.minute == now.minute:
-                    print('DailySchedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
-                    GPIO.output(schedule.pin, False)
-                    off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
-
-            #WeekSchedule
-            for schedule in weeklyschedule:
-                actualday = [schedule.d1,schedule.d2,schedule.d3,schedule.d4,schedule.d5,schedule.d6,schedule.d7] 
-                if actualday[weekday] and schedule.time.hour == now.hour and schedule.time.minute == now.minute:
-                    print('WeekSchedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
-                    GPIO.output(schedule.pin, False)
-                    off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
-
-            #If active schedule then add to off
-            if off_pin:
-                for key,value in off_pin.items():
-                    if value.hour == now.hour and value.minute == now.minute:
-                        print('Schedule RESET :(',value.hour, ':', value.minute, ') - pin : ' , key)
-                        GPIO.output(key, True)
-
-        past_minut = now.minute
-
-
-# Setup
-@app.before_first_request
-def initialize():
-    db.create_all()
-    setup_gpio()
-    global thread,ip_req
-    ip_req = []
-    thread = threading.Thread(target=schedule_task, name = 'Schedule')
-    thread.daemon = True
-    thread.start()
 
 def TSL2561():
     # Read data back from 0x0C(12) with command register, 0x80(128), 2 bytes
@@ -190,6 +159,78 @@ def BMP280():
     pressure = (p + (var1 + var2 + (dig_P7)) / 16.0) / 100
     return [cTemp, fTemp, pressure]
 
+def schedule_task():
+    global off_pin,stop_threads
+
+    stop_threads = False 
+    past_minut = 0
+    off_pin = {}
+    # While loop
+    print('Start Thread...')
+    while True:
+        now = datetime.now()
+        weekday = now.weekday()
+        if stop_threads:
+            print('Stop Thread...')
+            stop_threads = False 
+            break
+
+        if now.minute != past_minut:
+            dailyschedule = DailySchedule.query.all()
+            weeklyschedule = WeeklySchedule.query.all()
+            db.session.commit()
+
+            #DailySchedule
+            for schedule in dailyschedule:
+                if schedule.time.hour == now.hour and schedule.time.minute == now.minute:
+                    print('DailySchedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
+                    GPIO.output(schedule.pin, False)
+                    off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
+
+            #WeekSchedule
+            for schedule in weeklyschedule:
+                actualday = [schedule.d1,schedule.d2,schedule.d3,schedule.d4,schedule.d5,schedule.d6,schedule.d7] 
+                if actualday[weekday] and schedule.time.hour == now.hour and schedule.time.minute == now.minute:
+                    print('WeekSchedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
+                    GPIO.output(schedule.pin, False)
+                    off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
+
+            #If active schedule then add to off
+            if off_pin:
+                for key,value in off_pin.items():
+                    if value.hour == now.hour and value.minute == now.minute:
+                        print('Schedule RESET :(',value.hour, ':', value.minute, ') - pin : ' , key)
+                        GPIO.output(key, True)
+
+        past_minut = now.minute
+
+
+# Setup
+#@app.before_first_request
+def initialize():
+    db.create_all()
+    setup_gpio()
+    global thread, ip_req, api_key
+    ip_req = []
+    api_key = {}
+    load_config(api_key = api_key)
+    thread = threading.Thread(target=schedule_task, name = 'Schedule')
+    thread.daemon = True
+    thread.start()
+
+#api_key = {
+#    'darksky' : '8cf0d9b4c83a4030bfaf2c73491334cf',
+#    'openweathermap' : '3dca0989ce139015bd7f881af1893c5f',
+#    'opencagedata' : 'd82859da6a3d4320b056ab23ffe5d627'
+#}
+
+def get_openweathermap_data(city): # api_key['darksky']
+    try:
+        url = f'http://api.openweathermap.org/data/2.5/weather?q={ city }&units=metric&appid=' + api_key['openweathermap']
+        r = requests.get(url, timeout=10).json()
+        return r
+    except requests.exceptions.Timeout as e: 
+        print(e)
 
 @app.route('/')
 def index():
@@ -418,6 +459,7 @@ def all_on():
     for pin in pins:
         if pin.io: GPIO.output(pin.pin, False)
     return redirect(url_for('index'))
+
 # ---------------------------------------- Activate Schedule
 
 @app.route('/activeweekly/<int:id>')
@@ -440,16 +482,6 @@ def activedaily(id):
     flash(f'Sucessfully active!', 'primary')
     return redirect(url_for('index'))
 
-# ---------------------------------------- TASK
-
-@app.route("/task")
-def task():
-    global thread
-    thread = threading.Thread(target=schedule_task, name = 'Schedule')
-    thread.daemon = True
-    thread.start()
-    return redirect(url_for('index'))
-
 @app.route("/func")
 def func():
     bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
@@ -458,4 +490,41 @@ def func():
 
 @app.route("/get_my_ip", methods=["GET"])
 def get_my_ip():
-    return jsonify({'ip': request.remote_addr}), 200
+    return jsonify({
+                    'your_ip': request.remote_addr,
+                    'all_accessed_ip': ip_req
+                    }), 200
+
+# ---------------------------------------- Thread
+
+@app.route("/thread/list")
+def thread_list():
+    thread_list = []
+    for thread in threading.enumerate(): 
+        thread_list.append(thread.name)
+    return jsonify(thread_list)
+
+@app.route("/thread/run")
+def thread_run():
+    global thread
+    thread = threading.Thread(target=schedule_task, name = 'Schedule')
+    thread.daemon = True
+    thread.start()
+    return redirect(url_for('index'))
+
+@app.route("/thread/stop")
+def thread_stop():
+    global stop_threads
+    stop_threads = True 
+    return redirect(url_for('index'))
+
+
+@app.route("/weather/<city>")
+def weather(city):
+    data = get_openweathermap_data(city)
+    print(data['weather'][0]['main'])
+    #print(data['rain'])
+    if 'rain' in data:
+        print(data['rain'])
+#    print(data['test'])
+    return jsonify(data)

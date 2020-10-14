@@ -34,6 +34,5 @@ class WeeklySchedule(db.Model):
     d6         = db.Column(db.Boolean)
     d7         = db.Column(db.Boolean)
 
-
     def __repr__(self):
         return self.id

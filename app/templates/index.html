@@ -24,9 +24,9 @@
     <a class="p-2 text-dark" href="#">Support</a>
     <a class="p-2 text-dark" href="#">Pricing</a>-->
   {% if isalive %}
-  <button type="button" class="btn btn-success">Schedule : Run</button>
+  <a class="btn btn-success" href="{{ url_for('thread_stop')}}">Schedule : Run</a>
   {% else %}
-  <a class="btn btn-danger" href="{{ url_for('task')}}">Schedule : Stop</a>
+  <a class="btn btn-danger" href="{{ url_for('thread_run')}}">Schedule : Stop</a>
   {% endif %}
 </nav>
 </div>
@@ -97,7 +97,7 @@
               </td>
           </tr>
 
-          <!-- EDIT DAILY -->
+          <!-- EDIT PIN -->
           <div class="modal fade" id="editpin{{pin.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
               <div class="modal-content">
