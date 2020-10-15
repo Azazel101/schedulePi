@@ -2,6 +2,17 @@ import smbus
 
 bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
 
+def scan_i2c():
+    bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
+    print('i2c scan...')
+    for device in range(128):
+
+        try:
+            bus.read_byte(device)
+            print(hex(device))
+        except: # exception if read_byte fails
+            pass
+
 def TSL2561():
     # Read data back from 0x0C(12) with command register, 0x80(128), 2 bytes
     # ch0 LSB, ch0 MSB

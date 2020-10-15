@@ -1,8 +1,5 @@
-# -*- encoding: utf-8 -*-
-
-from app import app, db
+from app import app
 from app.views import initialize
-from app.configuration import Config
 
 if __name__ == "__main__":
     initialize()

@@ -12,7 +12,7 @@ from flask               import render_template, request, url_for, redirect, sen
 
 # App modules
 from app                 import app, db#, bc
-from app.models          import Pin, DailySchedule, WeeklySchedule
+from app.models          import Pin, DailySchedule, WeeklySchedule,API
 
 from datetime            import datetime,date,timedelta,time
 
@@ -21,29 +21,16 @@ import threading
 import OPi.GPIO          as GPIO
 import smbus
 
-from configparser import ConfigParser
-
-config = ConfigParser()
-config.read('config.ini')
-
 bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
 
-#def set_config():
-#    config.read('config.ini')
-#    config.add_section('main')
-#    config.set('main', 'darksky', '8cf0d9b4c83a4030bfaf2c73491334cf')
-#    config.set('main', 'openweathermap', '3dca0989ce139015bd7f881af1893c5f')
-#    config.set('main', 'opencagedata', 'd82859da6a3d4320b056ab23ffe5d627')
-
-#    with open('config.ini', 'w') as f:
-#        config.write(f)
-
-def load_config(api_key):
-    print('Load API-Key...')
-    api_key['darksky'] = config.get('main', 'darksky')
-    api_key['openweathermap'] = config.get('main', 'openweathermap')
-    api_key['opencagedata'] = config.get('main', 'opencagedata')
-
+def checkInternetSocket(host="8.8.8.8", port=53, timeout=3):
+    try:
+        socket.setdefaulttimeout(timeout)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+        return True
+    except socket.error as ex:
+        print(ex)
+        return False
 
 def get_Host_name_IP(): 
     try: 
@@ -68,103 +55,14 @@ def setup_gpio():
             print('Set INPUT : ', pin.pin)
             GPIO.setup(pin.pin, GPIO.IN)
 
-def scan_i2c():
-    bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
-    print('i2c scan...')
-    for device in range(128):
-
-        try:
-            bus.read_byte(device)
-            print(hex(device))
-        except: # exception if read_byte fails
-            pass
-
-def TSL2561():
-    # Read data back from 0x0C(12) with command register, 0x80(128), 2 bytes
-    # ch0 LSB, ch0 MSB
-    data = bus.read_i2c_block_data(0x39, 0x0C | 0x80, 2)
-    # Read data back from 0x0E(14) with command register, 0x80(128), 2 bytes
-    # ch1 LSB, ch1 MSB
-    data1 = bus.read_i2c_block_data(0x39, 0x0E | 0x80, 2)
-    # Convert the data
-    ch0 = data[1] * 256 + data[0]
-    ch1 = data1[1] * 256 + data1[0]
-    return [ch0, ch1]
-
-def BMP280():
-    # Get I2C bus
-    # BMP280 address, 0x76(118)
-    # Read data back from 0x88(136), 24 bytes
-    b1 = bus.read_i2c_block_data(0x76, 0x88, 24)
-    # Convert the data
-    # Temp coefficents
-    dig_T1 = b1[1] * 256 + b1[0]
-    dig_T2 = b1[3] * 256 + b1[2]
-    if dig_T2 > 32767 :
-        dig_T2 -= 65536
-    dig_T3 = b1[5] * 256 + b1[4]
-    if dig_T3 > 32767 :
-        dig_T3 -= 65536
-    # Pressure coefficents
-    dig_P1 = b1[7] * 256 + b1[6]
-    dig_P2 = b1[9] * 256 + b1[8]
-    if dig_P2 > 32767 :
-        dig_P2 -= 65536
-    dig_P3 = b1[11] * 256 + b1[10]
-    if dig_P3 > 32767 :
-        dig_P3 -= 65536
-    dig_P4 = b1[13] * 256 + b1[12]
-    if dig_P4 > 32767 :
-        dig_P4 -= 65536
-    dig_P5 = b1[15] * 256 + b1[14]
-    if dig_P5 > 32767 :
-        dig_P5 -= 65536
-    dig_P6 = b1[17] * 256 + b1[16]
-    if dig_P6 > 32767 :
-        dig_P6 -= 65536
-    dig_P7 = b1[19] * 256 + b1[18]
-    if dig_P7 > 32767 :
-        dig_P7 -= 65536
-    dig_P8 = b1[21] * 256 + b1[20]
-    if dig_P8 > 32767 :
-        dig_P8 -= 65536
-    dig_P9 = b1[23] * 256 + b1[22]
-    if dig_P9 > 32767 :
-        dig_P9 -= 65536
-
-    # Read data back from 0xF7(247), 8 bytes
-    # Pressure MSB, Pressure LSB, Pressure xLSB, Temperature MSB, Temperature LSB
-    # Temperature xLSB, Humidity MSB, Humidity LSB
-    data = bus.read_i2c_block_data(0x76, 0xF7, 8)
-    # Convert pressure and temperature data to 19-bits
-    adc_p = ((data[0] * 65536) + (data[1] * 256) + (data[2] & 0xF0)) / 16
-    adc_t = ((data[3] * 65536) + (data[4] * 256) + (data[5] & 0xF0)) / 16
-    # Temperature offset calculations
-    var1 = ((adc_t) / 16384.0 - (dig_T1) / 1024.0) * (dig_T2)
-    var2 = (((adc_t) / 131072.0 - (dig_T1) / 8192.0) * ((adc_t)/131072.0 - (dig_T1)/8192.0)) * (dig_T3)
-    t_fine = (var1 + var2)
-    cTemp = (var1 + var2) / 5120.0
-    fTemp = cTemp * 1.8 + 32
-    # Pressure offset calculations
-    var1 = (t_fine / 2.0) - 64000.0
-    var2 = var1 * var1 * (dig_P6) / 32768.0
-    var2 = var2 + var1 * (dig_P5) * 2.0
-    var2 = (var2 / 4.0) + ((dig_P4) * 65536.0)
-    var1 = ((dig_P3) * var1 * var1 / 524288.0 + ( dig_P2) * var1) / 524288.0
-    var1 = (1.0 + var1 / 32768.0) * (dig_P1)
-    p = 1048576.0 - adc_p
-    p = (p - (var2 / 4096.0)) * 6250.0 / var1
-    var1 = (dig_P9) * p * p / 2147483648.0
-    var2 = p * (dig_P8) / 32768.0
-    pressure = (p + (var1 + var2 + (dig_P7)) / 16.0) / 100
-    return [cTemp, fTemp, pressure]
-
 def schedule_task():
-    global off_pin,stop_threads
+    global off_pin,stop_threads, api_key, weather, sunrise, sunset
 
     stop_threads = False 
     past_minut = 0
+    past_hour = 0
     off_pin = {}
+    api_key = {}
     # While loop
     print('Start Thread...')
     while True:
@@ -174,6 +72,21 @@ def schedule_task():
             print('Stop Thread...')
             stop_threads = False 
             break
+
+        if now.hour != past_hour:
+            print('Hour schedule...')
+            apis = API.query.all()
+            for api in apis:
+                api_key[api.name] = api.api_key
+
+            if checkInternetSocket():
+                data = get_openweathermap_data('galanta')
+                weather = data['weather'][0]['main']
+                sunrise = datetime.fromtimestamp(int(data['sys']['sunrise']))
+                sunset = datetime.fromtimestamp(int(data['sys']['sunset']))
+
+        past_hour = now.hour
+
 
         if now.minute != past_minut:
             dailyschedule = DailySchedule.query.all()
@@ -204,7 +117,6 @@ def schedule_task():
 
         past_minut = now.minute
 
-
 # Setup
 #@app.before_first_request
 def initialize():
@@ -212,22 +124,15 @@ def initialize():
     setup_gpio()
     global thread, ip_req, api_key
     ip_req = []
-    api_key = {}
-    load_config(api_key = api_key)
+
     thread = threading.Thread(target=schedule_task, name = 'Schedule')
     thread.daemon = True
     thread.start()
 
-#api_key = {
-#    'darksky' : '8cf0d9b4c83a4030bfaf2c73491334cf',
-#    'openweathermap' : '3dca0989ce139015bd7f881af1893c5f',
-#    'opencagedata' : 'd82859da6a3d4320b056ab23ffe5d627'
-#}
-
 def get_openweathermap_data(city): # api_key['darksky']
     try:
         url = f'http://api.openweathermap.org/data/2.5/weather?q={ city }&units=metric&appid=' + api_key['openweathermap']
-        r = requests.get(url, timeout=10).json()
+        r = requests.get(url, timeout=5).json()
         return r
     except requests.exceptions.Timeout as e: 
         print(e)
@@ -243,6 +148,7 @@ def index():
     pins = Pin.query.order_by(Pin.pin.asc()).all()
     dailyschedule = DailySchedule.query.all()
     weeklyschedule = WeeklySchedule.query.all()
+    apis = API.query.all()
 
     pin_status = {}
     used_pin = []
@@ -264,7 +170,11 @@ def index():
 
     isalive = thread.isAlive()
 
-    return render_template("index.html", 
+    return render_template("index.html",
+                            weather=weather,
+                            sunrise=sunrise,
+                            sunset=sunset,
+                            apis=apis,
                             dailyschedule=dailyschedule,
                             weeklyschedule=weeklyschedule,
                             hour=hour,
@@ -293,7 +203,6 @@ def addpin():
         setup_gpio()      
         flash(f'Sucessfull add!', 'success')
         return redirect(url_for('index'))
-
 
 @app.route('/adddaily', methods=['POST'])
 def adddaily():
@@ -340,6 +249,17 @@ def addweekly():
         db.session.commit()
         flash(f'Sucessfully add!', 'success')
 
+        return redirect(url_for('index'))
+
+@app.route('/addapi', methods=['POST'])
+def addapi():
+    if request.method == 'POST':
+        name = request.form['name']
+        api_key = request.form['api_key']
+        newapi = API(name=name, api_key=api_key)
+        db.session.add(newapi)
+        db.session.commit()
+        flash(f'Sucessfull add!', 'success')
         return redirect(url_for('index'))
 
 # ---------------------------------------- EDIT
@@ -397,6 +317,16 @@ def editweekly(id):
         flash(f'Sucessfully update!', 'warning')
         return redirect(url_for('index'))
 
+@app.route('/editapi/<int:id>', methods=['POST'])
+def editapi(id):
+    if request.method == 'POST':
+        data = API.query.filter_by(id=id).first()
+        data.name = request.form['name']
+        data.api_key = request.form['api_key']
+        db.session.commit()
+        flash(f'Sucessfully update!', 'warning')
+        return redirect(url_for('index'))
+
 # ---------------------------------------- DELETE
 
 @app.route('/delpin/<id>')
@@ -434,12 +364,20 @@ def delweekly(id):
 
     return redirect(url_for('index'))
 
+@app.route('/delapi/<id>')
+def delapi(id):
+    delapi = API.query.filter_by(id=id).first()
+    db.session.delete(delapi)
+    db.session.commit()
+    flash(f'Sucessfully delete!', 'danger')
+
+    return redirect(url_for('index'))
+
 # ---------------------------------------- GPIO - ON/OFF
 @app.route("/on/<int:id>")
 def gpio_on(id):
     GPIO.output(id, True)
     return redirect(url_for('index'))
-
 
 @app.route("/off/<int:id>")
 def gpio_off(id):
@@ -461,7 +399,6 @@ def all_on():
     return redirect(url_for('index'))
 
 # ---------------------------------------- Activate Schedule
-
 @app.route('/activeweekly/<int:id>')
 def activeweekly(id):
     now = datetime.now()
@@ -481,19 +418,6 @@ def activedaily(id):
     off_pin[active.pin] = now + timedelta(minutes=active.duration)
     flash(f'Sucessfully active!', 'primary')
     return redirect(url_for('index'))
-
-@app.route("/func")
-def func():
-    bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
-    print(BMP280())
-    return redirect(url_for('index'))
-
-@app.route("/get_my_ip", methods=["GET"])
-def get_my_ip():
-    return jsonify({
-                    'your_ip': request.remote_addr,
-                    'all_accessed_ip': ip_req
-                    }), 200
 
 # ---------------------------------------- Thread
 
@@ -518,13 +442,30 @@ def thread_stop():
     stop_threads = True 
     return redirect(url_for('index'))
 
+# ---------------------------------------- Check NET
+
+@app.route("/checknet")
+def checknet():
+    data = checkInternetSocket()
+    return jsonify(data)
+
+# ---------------------------------------- Weather
 
 @app.route("/weather/<city>")
 def weather(city):
     data = get_openweathermap_data(city)
-    print(data['weather'][0]['main'])
-    #print(data['rain'])
+    weather = data['weather'][0]['main']
+    sunrise = datetime.fromtimestamp(int(data['sys']['sunrise']))
+    sunset = datetime.fromtimestamp(int(data['sys']['sunset']))
+    print(sunrise,sunset)
     if 'rain' in data:
         print(data['rain'])
-#    print(data['test'])
     return jsonify(data)
+
+# ---------------------------------------- Get IP
+@app.route("/get_my_ip", methods=["GET"])
+def get_my_ip():
+    return jsonify({
+                    'your_ip': request.remote_addr,
+                    'all_accessed_ip': ip_req
+                    }), 200

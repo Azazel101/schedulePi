@@ -48,6 +48,7 @@
      <div class="row">
       <div class="mx-auto text-center"> <!-- style="margin-top: 2%"-->
         <p>Week day : {{ weekday + 1 }} / {{ dayname }}</p>
+        <p>{{ weather }} / {{ sunrise }} / {{ sunset }}</p>
       </div>
     </div>
       <div class="card mb-4 shadow-sm align-item-center">
@@ -237,6 +238,7 @@
             </tbody>
           </table>
         </div>
+
 <!-- Weekly Schedules -->
     <div class="card mb-4 shadow-sm">
       <div class="card-header">
@@ -355,7 +357,87 @@
           </tbody>
         </table>
       </div>
- </div>
+
+<!-- API -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-header">
+    API
+    <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#addapi">Add API</button>
+  </div>
+  <table class="card-table table table-sm text-center">
+      <thead>
+        <tr>
+          <th class="align-middle">Name</th>
+          <th class="align-middle">Key</th>
+          <th class="align-middle">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for api in apis %}
+        <tr>
+          <td class="align-middle">{{api.name}}</td>
+          <td class="align-middle">{{api.api_key}}</td>
+          <td class="align-middle">
+            <a href="" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editapi{{api.id}}">Edit</a>
+            <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteapi{{api.id}}">Delete</a>
+          </td>   
+         </tr>
+
+        <!-- EDIT API -->
+        <div class="modal fade" id="editapi{{api.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+              <h5 class="modal-title" id="exampleModalLabel">Edit API : {{api.name}}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form action="{{ url_for('editapi', id=api.id) }}" method="POST">
+                <div class="form-group">
+                  <label for="name">Name</label>
+                  <input type="text" class="form-control" value="{{api.name}}" name="name" id="name" required>
+                </div>
+                <div class="form-group">
+                  <label for="name">API Key</label>
+                  <input type="text" class="form-control" value="{{api.api_key}}" name="api_key" id="api_key" required>
+                </div>  
+              </div>    
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-warning">Update</button>
+            </div>
+          </form>
+          </div>
+        </div>
+      </div>
+
+         <!-- DELETE API -->
+        <div class="modal fade" id="deleteapi{{api.id}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title" id="exampleModalLabel">Delete API : {{api.name}}</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              Are you sure want delete?
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <a class="btn btn-danger" href="{{ url_for('delapi', id=api.id) }}">Delete</a>
+            </div>
+          </div>
+        </div>
+      </div>
+        {% endfor %}
+      </tbody>
+  </table>
+</div>
+</div>
 
 <!-- ADD PIN -->
  <div class="modal fade" id="addpin" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -494,6 +576,36 @@
           <div class="form-check form-check-inline">
             <input class="form-check-input" name="day7" type="checkbox" id="day7" value="7">
             <label class="form-check-label" for="day7">7</label>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
+<!-- ADD API -->
+<div class="modal fade" id="addapi" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="exampleModalLabel">Add API</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ url_for('addapi') }}" method="POST">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" class="form-control" name="name" id="name" required>
+          </div>
+          <div class="form-group">
+            <label for="name">API Key</label>
+            <input type="text" class="form-control" name="api_key" id="api_key" required>
           </div>
       </div>
       <div class="modal-footer">
