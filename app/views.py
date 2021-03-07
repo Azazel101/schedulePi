@@ -89,6 +89,8 @@ def schedule_task():
 
 
         if now.minute != past_minut:
+            print('Minute schedule...')
+
             dailyschedule = DailySchedule.query.all()
             weeklyschedule = WeeklySchedule.query.all()
             db.session.commit()
@@ -172,8 +174,8 @@ def index():
 
     return render_template("index.html",
                             weather=weather,
-                            sunrise=sunrise,
-                            sunset=sunset,
+                           # sunrise=sunrise,
+                            #sunset=sunset,
                             apis=apis,
                             dailyschedule=dailyschedule,
                             weeklyschedule=weeklyschedule,
