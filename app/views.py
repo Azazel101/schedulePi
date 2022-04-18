@@ -2,16 +2,16 @@
 
 # Python modules
 import os, logging 
-import socket    # Get Host name and IP
+import socket
+from telnetlib import theNULL    # Get Host name and IP
 import time
-import logging
 import requests
 
 # Flask modules
-from flask               import render_template, request, url_for, redirect, send_from_directory, send_file, flash, jsonify
+from flask               import render_template, request, url_for, redirect, flash, jsonify
 
 # App modules
-from app                 import app, db#, bc
+from app                 import app, db
 from app.models          import Pin, DailySchedule, WeeklySchedule,API
 
 from datetime            import datetime,date,timedelta,time
@@ -459,22 +459,18 @@ def thread_stop():
 
 # ---------------------------------------- Check NET
 
-@app.route("/checknet")
+@app.route("/checknet", methods=["GET"])
 def checknet():
     data = checkInternetSocket()
     return jsonify(data)
 
-# ---------------------------------------- Weather
+# ---------------------------------------- Get API row data
 
-@app.route("/weather/<city>")
-def weather(city):
-    data = get_weatherapi_data(city)
-#    weather = data['weather'][0]['main']
-#    sunrise = datetime.fromtimestamp(int(data['sys']['sunrise']))
-#    sunset = datetime.fromtimestamp(int(data['sys']['sunset']))
-#    print(sunrise,sunset)
-#    if 'rain' in data:
-#        print(data['rain'])
+@app.route("/getapi/<string:api>/<string:city>", methods=["GET"])
+def getapi(api,city):
+    if api == 'weatherapi': data = get_weatherapi_data(city)
+    elif api == 'openweathermap': data = get_openweathermap_data(city)
+    else: data = 'API Provider not exist'
     return jsonify(data)
 
 # ---------------------------------------- Get IP
@@ -484,3 +480,12 @@ def get_my_ip():
                     'your_ip': request.remote_addr,
                     'all_accessed_ip': ip_req
                     }), 200
+
+# ---------------------------------------- System function
+@app.route("/shutdown", methods=["GET"])
+def shutdown():
+    os.system('sudo shutdown now')
+
+@app.route("/reboot", methods=["GET"])
+def reboot():
+    os.system('sudo reboot')

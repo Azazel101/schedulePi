@@ -1,16 +1,38 @@
 from app         import db
 
+def check_length(attribute, length):
+    """Checks the attribute's length."""
+    try:
+        return bool(attribute) and len(attribute) <= length
+    except:
+        return False
+
 class Pin(db.Model):
+    __tablename__ = "pin"
     id         = db.Column(db.Integer, primary_key=True, nullable=False)
     pin        = db.Column(db.Integer, nullable=False, unique=True)
     io         = db.Column(db.Boolean, nullable=False)
-    name       = db.Column(db.String(30))
+    name       = db.Column(db.String(128))
 #    schedules  = db.relationship('schedule', backref='pin', lazy='dynamic')
 
+    def __init__(self, name=None):
+        self.name = name or "untitled"
+
     def __repr__(self):
-        return self.name
+        return f"<Pin: {self.name}>"
+
+    @property
+    def title(self):
+        return self._title
+
+#    @title.setter
+#    def name(self, name):
+#        if not check_length(name, 128):
+#            raise ValueError(f"{name} is not a valid title")
+#        self._name = name
 
 class DailySchedule(db.Model):
+#    __tablename__ = "dailyschedule"
     id         = db.Column(db.Integer, primary_key=True, nullable=False)
     time       = db.Column(db.Time)
     pin        = db.Column(db.Integer, nullable=False)#, db.ForeignKey('pin.pin')
@@ -21,6 +43,7 @@ class DailySchedule(db.Model):
         return self.id
 
 class WeeklySchedule(db.Model):
+#    __tablename__ = "weeklyschedule"
     id         = db.Column(db.Integer, primary_key=True, nullable=False)
     time       = db.Column(db.Time, nullable=False)
     pin        = db.Column(db.Integer, nullable=False)#, db.ForeignKey('pin.pin')
