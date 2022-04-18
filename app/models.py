@@ -41,3 +41,6 @@ class API(db.Model):
     id         = db.Column(db.Integer, primary_key=True, nullable=False)
     name       = db.Column(db.String(30), unique=True)
     api_key    = db.Column(db.String(255), unique=True)
+#    city       = db.Column(db.String(30))
+#    temp       = db.Column(db.Float, nullable=True)
+#    precip     = db.Column(db.Float, nullable=True)

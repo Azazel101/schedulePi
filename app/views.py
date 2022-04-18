@@ -56,11 +56,13 @@ def setup_gpio():
             GPIO.setup(pin.pin, GPIO.IN)
 
 def schedule_task():
-    global off_pin,stop_threads, api_key, weather, sunrise, sunset
+    global off_pin,stop_threads, api_key, maxtemp_c, totalprecip_mm
 
     stop_threads = False 
     past_minut = 0
     past_hour = 0
+    totalprecip_mm = 0
+    maxtemp_c = 0
     off_pin = {}
     api_key = {}
     # While loop
@@ -74,22 +76,24 @@ def schedule_task():
             break
 
         if now.hour != past_hour:
-            print('Hour schedule...')
+#            print('Hour schedule...')
             apis = API.query.all()
             for api in apis:
                 api_key[api.name] = api.api_key
 
             if checkInternetSocket():
-                data = get_openweathermap_data('galanta')
-                weather = data['weather'][0]['main']
-                sunrise = datetime.fromtimestamp(int(data['sys']['sunrise']))
-                sunset = datetime.fromtimestamp(int(data['sys']['sunset']))
+                data = get_weatherapi_data('Galanta')
+                forecast_day = data['forecast']['forecastday'][0]['day']
+
+                maxtemp_c = forecast_day['maxtemp_c']
+                totalprecip_mm  = forecast_day['totalprecip_mm']
+
 
         past_hour = now.hour
 
 
         if now.minute != past_minut:
-            print('Minute schedule...')
+#            print('Minute schedule...')
 
             dailyschedule = DailySchedule.query.all()
             weeklyschedule = WeeklySchedule.query.all()
@@ -139,6 +143,14 @@ def get_openweathermap_data(city): # api_key['darksky']
     except requests.exceptions.Timeout as e: 
         print(e)
 
+def get_weatherapi_data(city): # api_key['darksky']
+    try:
+        url = f'http://api.weatherapi.com/v1/forecast.json?key=' + api_key['weatherapi'] + '&q=' + city + '&days=1&aqi=no&alerts=no'
+        r = requests.get(url, timeout=5).json()
+        return r
+    except requests.exceptions.Timeout as e: 
+        print(e)
+
 @app.route('/')
 def index():
 #    get_Host_name_IP()
@@ -164,6 +176,7 @@ def index():
 
     days= ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
     avalible_pins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26]
+    api_provider = ['openweathermap', 'darksky' , 'opencagedata', 'weatherapi']
 
     for pin in used_pin: # delete used pin
         avalible_pins.remove(pin)
@@ -173,10 +186,10 @@ def index():
     isalive = thread.isAlive()
 
     return render_template("index.html",
-                            weather=weather,
-                           # sunrise=sunrise,
-                            #sunset=sunset,
+                            totalprecip_mm=totalprecip_mm,
+                            maxtemp_c=maxtemp_c,
                             apis=apis,
+                            api_provider=api_provider,
                             dailyschedule=dailyschedule,
                             weeklyschedule=weeklyschedule,
                             hour=hour,
@@ -455,13 +468,13 @@ def checknet():
 
 @app.route("/weather/<city>")
 def weather(city):
-    data = get_openweathermap_data(city)
-    weather = data['weather'][0]['main']
-    sunrise = datetime.fromtimestamp(int(data['sys']['sunrise']))
-    sunset = datetime.fromtimestamp(int(data['sys']['sunset']))
-    print(sunrise,sunset)
-    if 'rain' in data:
-        print(data['rain'])
+    data = get_weatherapi_data(city)
+#    weather = data['weather'][0]['main']
+#    sunrise = datetime.fromtimestamp(int(data['sys']['sunrise']))
+#    sunset = datetime.fromtimestamp(int(data['sys']['sunset']))
+#    print(sunrise,sunset)
+#    if 'rain' in data:
+#        print(data['rain'])
     return jsonify(data)
 
 # ---------------------------------------- Get IP

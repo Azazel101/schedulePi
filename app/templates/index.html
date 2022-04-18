@@ -48,7 +48,7 @@
      <div class="row">
       <div class="mx-auto text-center"> <!-- style="margin-top: 2%"-->
         <p>Week day : {{ weekday + 1 }} / {{ dayname }}</p>
-        <p>{{ weather }} / {{ sunrise }} / {{ sunset }}</p>
+        <p>MaxTemp : {{ maxtemp_c }} / Precip mm : {{ totalprecip_mm }}</p>
       </div>
     </div>
       <div class="card mb-4 shadow-sm align-item-center">
@@ -167,7 +167,7 @@
             <tbody>
               {% for daily in dailyschedule %}
               <tr>
-                <td class="align-middle">{{daily.time}}</td>
+                <td class="align-middle">{{daily.time.strftime('%H:%M')}}</td>
                 <td class="align-middle">{{daily.name}}</td>
                 <td class="align-middle">{{daily.duration}} min</td>
                 <td class="align-middle">
@@ -257,7 +257,7 @@
           <tbody>
             {% for weekly in weeklyschedule %}
             <tr>
-              <td class="align-middle">{{weekly.time}}</td>
+              <td class="align-middle">{{weekly.time.strftime('%H:%M')}}</td>
               <td class="align-middle">{{weekly.name}}</td>
               <td class="align-middle">{{weekly.duration}} min</td>
               <td class="align-middle">
@@ -361,7 +361,7 @@
 <!-- API -->
 <div class="card mb-4 shadow-sm">
   <div class="card-header">
-    API
+    API Provider
     <button type="button" class="btn btn-sm btn-primary float-right" data-toggle="modal" data-target="#addapi">Add API</button>
   </div>
   <table class="card-table table table-sm text-center">
@@ -376,7 +376,7 @@
         {% for api in apis %}
         <tr>
           <td class="align-middle">{{api.name}}</td>
-          <td class="align-middle">{{api.api_key}}</td>
+          <td class="align-middle">{{ api.api_key[:8] }}...</td>
           <td class="align-middle">
             <a href="" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editapi{{api.id}}">Edit</a>
             <a href="" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteapi{{api.id}}">Delete</a>
@@ -395,10 +395,17 @@
             </div>
             <div class="modal-body">
               <form action="{{ url_for('editapi', id=api.id) }}" method="POST">
+
                 <div class="form-group">
-                  <label for="name">Name</label>
-                  <input type="text" class="form-control" value="{{api.name}}" name="name" id="name" required>
+                  <label for="pin">Name</label>
+                  <select class="custom-select" name="name" required>
+                    <option value="">Select...</option>
+                    {% for data in api_provider %}
+                    <option value="{{data}}" {% if data == api.name %} selected {% endif %} >{{data}}</option>
+                    {% endfor %}
+                  </select> 
                 </div>
+
                 <div class="form-group">
                   <label for="name">API Key</label>
                   <input type="text" class="form-control" value="{{api.api_key}}" name="api_key" id="api_key" required>
@@ -600,8 +607,13 @@
       <div class="modal-body">
         <form action="{{ url_for('addapi') }}" method="POST">
           <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" name="name" id="name" required>
+            <label for="pin">Name</label>
+            <select class="custom-select" name="name" required>
+              <option value="">Select...</option>
+              {% for data in api_provider %}
+              <option value="{{data}}" >{{data}}</option>
+              {% endfor %}
+            </select> 
           </div>
           <div class="form-group">
             <label for="name">API Key</label>
