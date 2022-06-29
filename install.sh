@@ -17,6 +17,9 @@ cd schedulePi
 pip3 install -r requirements.txt
 python3 run.py
 
+
+# Orange PI
+
 # add to crontab
 # sudo crontab -e
 #@reboot sh /schedulePi/launcher.sh >/schedulePi/cronlog 2>&1
