@@ -19,9 +19,9 @@ from datetime            import datetime,date,timedelta,time
 import threading
 
 import OPi.GPIO          as GPIO
-import smbus
+#import smbus
 
-bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
+#bus = smbus.SMBus(0) # 1 indicates /dev/i2c-0
 
 def checkInternetSocket(host="8.8.8.8", port=53, timeout=3):
     try:
@@ -80,13 +80,14 @@ def schedule_task():
             apis = API.query.all()
             for api in apis:
                 api_key[api.name] = api.api_key
+                print(api_key[api.name])
 
-            if checkInternetSocket():
-                data = get_weatherapi_data('Galanta')
-                forecast_day = data['forecast']['forecastday'][0]['day']
+#            if checkInternetSocket():
+#                data = get_weatherapi_data('Galanta')
+#                forecast_day = data['forecast']['forecastday'][0]['day']
 
-                maxtemp_c = forecast_day['maxtemp_c']
-                totalprecip_mm  = forecast_day['totalprecip_mm']
+#                maxtemp_c = forecast_day['maxtemp_c']
+#                totalprecip_mm  = forecast_day['totalprecip_mm']
 
 
         past_hour = now.hour
@@ -101,7 +102,7 @@ def schedule_task():
 
             #DailySchedule
             for schedule in dailyschedule:
-                if schedule.time.hour == now.hour and schedule.time.minute == now.minute:
+                if schedule.active == True and schedule.time.hour == now.hour and schedule.time.minute == now.minute:
                     print('DailySchedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
                     GPIO.output(schedule.pin, False)
                     off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
@@ -109,7 +110,7 @@ def schedule_task():
             #WeekSchedule
             for schedule in weeklyschedule:
                 actualday = [schedule.d1,schedule.d2,schedule.d3,schedule.d4,schedule.d5,schedule.d6,schedule.d7] 
-                if actualday[weekday] and schedule.time.hour == now.hour and schedule.time.minute == now.minute:
+                if schedule.active == True and actualday[weekday] and schedule.time.hour == now.hour and schedule.time.minute == now.minute:
                     print('WeekSchedule SET :(',schedule.time.hour ,':', schedule.time.minute, ') - pin :', schedule.pin)
                     GPIO.output(schedule.pin, False)
                     off_pin[schedule.pin] = now + timedelta(minutes=schedule.duration)
@@ -183,7 +184,7 @@ def index():
 
     dayname = days[weekday]
 
-    isalive = thread.isAlive()
+    isalive = thread.is_alive()
 
     return render_template("index.html",
                             totalprecip_mm=totalprecip_mm,
@@ -413,25 +414,55 @@ def all_on():
         if pin.io: GPIO.output(pin.pin, False)
     return redirect(url_for('index'))
 
-# ---------------------------------------- Activate Schedule
+# ---------------------------------------- Active Schedule
 @app.route('/activeweekly/<int:id>')
 def activeweekly(id):
+    active = WeeklySchedule.query.filter_by(id=id).first()
+    print(id, active.active)
+    if active.active == True:
+        active.active = False
+        flash(f'Sucessfully deactive!', 'primary')
+    elif active.active == False:
+        active.active = True
+        flash(f'Sucessfully active!', 'primary')
+    db.session.commit()
+
+    return redirect(url_for('index'))
+
+@app.route('/activedaily/<int:id>')
+def activedaily(id):
+    active = DailySchedule.query.filter_by(id=id).first()
+    print(id, active.active)
+    if active.active == True:
+        active.active = False
+        flash(f'Sucessfully deactive!', 'primary')
+    elif active.active == False:
+        active.active = True
+        flash(f'Sucessfully active!', 'primary')
+    print(id, active.active)
+    db.session.commit()
+    return redirect(url_for('index'))
+
+
+# ---------------------------------------- Run Schedule
+@app.route('/runweekly/<int:id>')
+def runweekly(id):
     now = datetime.now()
     active = WeeklySchedule.query.filter_by(id=id).first()
     db.session.commit()
     GPIO.output(active.pin, False)
     off_pin[active.pin] = now + timedelta(minutes=active.duration)
-    flash(f'Sucessfully active!', 'primary')
+    flash(f'Sucessfully run!', 'primary')
     return redirect(url_for('index'))
 
-@app.route('/activedaily/<int:id>')
-def activedaily(id):
+@app.route('/rundaily/<int:id>')
+def rundaily(id):
     now = datetime.now()
     active = DailySchedule.query.filter_by(id=id).first()
     db.session.commit()
     GPIO.output(active.pin, False)
     off_pin[active.pin] = now + timedelta(minutes=active.duration)
-    flash(f'Sucessfully active!', 'primary')
+    flash(f'Sucessfully run!', 'primary')
     return redirect(url_for('index'))
 
 # ---------------------------------------- Thread

@@ -15,15 +15,8 @@ class Pin(db.Model):
     name       = db.Column(db.String(128))
 #    schedules  = db.relationship('schedule', backref='pin', lazy='dynamic')
 
-    def __init__(self, name=None):
-        self.name = name or "untitled"
-
     def __repr__(self):
         return f"<Pin: {self.name}>"
-
-    @property
-    def title(self):
-        return self._title
 
 #    @title.setter
 #    def name(self, name):
@@ -34,6 +27,7 @@ class Pin(db.Model):
 class DailySchedule(db.Model):
 #    __tablename__ = "dailyschedule"
     id         = db.Column(db.Integer, primary_key=True, nullable=False)
+    active     = db.Column(db.Boolean, default=False)
     time       = db.Column(db.Time)
     pin        = db.Column(db.Integer, nullable=False)#, db.ForeignKey('pin.pin')
     name       = db.Column(db.String(30))
@@ -45,6 +39,7 @@ class DailySchedule(db.Model):
 class WeeklySchedule(db.Model):
 #    __tablename__ = "weeklyschedule"
     id         = db.Column(db.Integer, primary_key=True, nullable=False)
+    active     = db.Column(db.Boolean, default=False)
     time       = db.Column(db.Time, nullable=False)
     pin        = db.Column(db.Integer, nullable=False)#, db.ForeignKey('pin.pin')
     name       = db.Column(db.String(30))
@@ -62,6 +57,7 @@ class WeeklySchedule(db.Model):
 
 class API(db.Model):
     id         = db.Column(db.Integer, primary_key=True, nullable=False)
+    active     = db.Column(db.Boolean, default=False)
     name       = db.Column(db.String(30), unique=True)
     api_key    = db.Column(db.String(255), unique=True)
 #    city       = db.Column(db.String(30))

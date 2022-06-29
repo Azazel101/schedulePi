@@ -1,0 +1,26 @@
+Setting GPIO....
+Set OUTPUT :  10
+Set OUTPUT :  12
+Set OUTPUT :  26
+Set OUTPUT :  8
+Set OUTPUT :  24
+Set OUTPUT :  22
+Set OUTPUT :  18
+Set OUTPUT :  16
+Start Thread...
+ * Serving Flask app 'app' (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+ * Running on all addresses (0.0.0.0)
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://127.0.0.1:80
+ * Running on http://192.168.1.174:80 (Press CTRL+C to quit)
+192.168.1.181 - - [29/Jun/2022 19:39:56] "GET / HTTP/1.1" 200 -
+192.168.1.181 - - [29/Jun/2022 19:39:57] "GET /static/css/style.css HTTP/1.1" 304 -
+192.168.1.181 - - [29/Jun/2022 19:39:57] "GET /static/js/bootstrap.min.js HTTP/1.1" 200 -
+192.168.1.181 - - [29/Jun/2022 19:39:57] "GET /static/js/jquery-3.4.1.min.js HTTP/1.1" 200 -
+192.168.1.181 - - [29/Jun/2022 19:39:57] "GET /static/css/bootstrap.min.css HTTP/1.1" 304 -
+192.168.1.181 - - [29/Jun/2022 19:39:57] "GET /static/favicon.png HTTP/1.1" 304 -
+Terminated
