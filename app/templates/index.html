@@ -267,9 +267,9 @@
               <td class="align-middle">{{weekly.duration}} min</td>
               <td class="align-middle">
               {% if weekly.active == False %}
-                <a class="btn btn-sm btn-primary" href="{{ url_for('activeweekly', id=daily.id) }}">Deactive</a> <!-- Output -->
+                <a class="btn btn-sm btn-primary" href="{{ url_for('activeweekly', id=weekly.id) }}">Deactive</a> <!-- Output -->
               {% else %}
-                <a class="btn btn-sm btn-success" href="{{ url_for('activeweekly', id=daily.id) }}">Active</a> <!-- Output -->
+                <a class="btn btn-sm btn-success" href="{{ url_for('activeweekly', id=weekly.id) }}">Active</a> <!-- Output -->
               {% endif %}
                 <a class="btn btn-sm btn-secondary" href="{{ url_for('runweekly', id=weekly.id) }}">Active</a>
                 <a href="" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editweekly{{weekly.id}}">Edit</a>

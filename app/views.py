@@ -418,7 +418,6 @@ def all_on():
 @app.route('/activeweekly/<int:id>')
 def activeweekly(id):
     active = WeeklySchedule.query.filter_by(id=id).first()
-    print(id, active.active)
     if active.active == True:
         active.active = False
         flash(f'Sucessfully deactive!', 'primary')
@@ -432,14 +431,12 @@ def activeweekly(id):
 @app.route('/activedaily/<int:id>')
 def activedaily(id):
     active = DailySchedule.query.filter_by(id=id).first()
-    print(id, active.active)
     if active.active == True:
         active.active = False
         flash(f'Sucessfully deactive!', 'primary')
     elif active.active == False:
         active.active = True
         flash(f'Sucessfully active!', 'primary')
-    print(id, active.active)
     db.session.commit()
     return redirect(url_for('index'))
 
